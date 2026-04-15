@@ -1,0 +1,33 @@
+server:
+  port: 8080
+  mode: debug  # debug, release, test
+
+database:
+  driver: mysql
+  host: localhost
+  port: 3306
+  database: rental_management
+  username: root
+  password: MrCw0Jx1Acks
+  charset: utf8mb4
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600  # seconds
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 100
+
+jwt:
+  secret: your-super-secret-key-change-in-production
+  issuer: rental-management
+  expire_hours: 168  # 7 days
+
+log:
+  level: debug  # debug, info, warn, error
+  format: console  # console, json
+  output: stdout  # stdout, file
+  file_path: logs/app.log

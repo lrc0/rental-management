@@ -1,0 +1,1117 @@
+basePath: /api/v1
+definitions:
+  rental-management_internal_pkg_response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  rental-management_internal_service.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  rental-management_internal_service.CreateBillRequest:
+    properties:
+      bill_month:
+        description: YYYY-MM
+        type: string
+      due_date:
+        type: string
+      electricity_fee:
+        type: number
+      gas_fee:
+        type: number
+      rent_fee:
+        type: number
+      room_id:
+        type: integer
+      tenant_id:
+        type: integer
+      water_fee:
+        type: number
+    required:
+    - bill_month
+    - room_id
+    type: object
+  rental-management_internal_service.CreateContractRequest:
+    properties:
+      deposit:
+        type: number
+      end_date:
+        type: string
+      monthly_rent:
+        type: number
+      payment_day:
+        type: integer
+      room_id:
+        type: integer
+      start_date:
+        type: string
+      tenant_id:
+        type: integer
+    required:
+    - end_date
+    - monthly_rent
+    - room_id
+    - start_date
+    - tenant_id
+    type: object
+  rental-management_internal_service.CreateMeterReadingRequest:
+    properties:
+      electricity_reading:
+        type: number
+      gas_reading:
+        type: number
+      reading_date:
+        description: YYYY-MM-DD
+        type: string
+      remark:
+        type: string
+      room_id:
+        type: integer
+      water_reading:
+        type: number
+    required:
+    - reading_date
+    - room_id
+    type: object
+  rental-management_internal_service.CreatePropertyRequest:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      property_type:
+        type: integer
+    required:
+    - name
+    - property_type
+    type: object
+  rental-management_internal_service.CreateRoomRequest:
+    properties:
+      area:
+        type: number
+      facilities:
+        type: string
+      floor:
+        type: integer
+      monthly_rent:
+        type: number
+      property_id:
+        type: integer
+      remark:
+        type: string
+      room_number:
+        type: string
+    required:
+    - property_id
+    - room_number
+    type: object
+  rental-management_internal_service.CreateTenantRequest:
+    properties:
+      emergency_contact:
+        type: string
+      emergency_phone:
+        type: string
+      gender:
+        type: integer
+      id_card:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      remark:
+        type: string
+    required:
+    - name
+    type: object
+  rental-management_internal_service.LoginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  rental-management_internal_service.PayBillRequest:
+    properties:
+      amount:
+        type: number
+      note:
+        type: string
+      payment_method:
+        type: integer
+    required:
+    - amount
+    - payment_method
+    type: object
+  rental-management_internal_service.RegisterRequest:
+    properties:
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  rental-management_internal_service.TerminateContractRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  rental-management_internal_service.UpdateFeeRateRequest:
+    properties:
+      electricity_rate:
+        type: number
+      gas_rate:
+        type: number
+      water_rate:
+        type: number
+    type: object
+  rental-management_internal_service.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      name:
+        type: string
+    type: object
+  rental-management_internal_service.UpdatePropertyRequest:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  rental-management_internal_service.UpdateRoomRequest:
+    properties:
+      area:
+        type: number
+      facilities:
+        type: string
+      floor:
+        type: integer
+      monthly_rent:
+        type: number
+      remark:
+        type: string
+      room_number:
+        type: string
+    type: object
+  rental-management_internal_service.UpdateTenantRequest:
+    properties:
+      emergency_contact:
+        type: string
+      emergency_phone:
+        type: string
+      gender:
+        type: integer
+      id_card:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      remark:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 面向个人房东的租房管理后端系统，支持房源管理、租客管理、水电气收费、租金账单等功能。
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: 租房管理系统 API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 房东用户登录
+      parameters:
+      - description: 登录信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      summary: 用户登录
+      tags:
+      - 认证
+  /auth/password:
+    put:
+      consumes:
+      - application/json
+      description: 修改当前登录用户密码
+      parameters:
+      - description: 密码信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 修改密码
+      tags:
+      - 认证
+  /auth/profile:
+    get:
+      description: 获取当前登录用户信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取用户信息
+      tags:
+      - 认证
+    put:
+      consumes:
+      - application/json
+      description: 更新当前登录用户信息
+      parameters:
+      - description: 用户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新用户信息
+      tags:
+      - 认证
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: 房东用户注册
+      parameters:
+      - description: 注册信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      summary: 用户注册
+      tags:
+      - 认证
+  /bills:
+    get:
+      description: 获取账单列表
+      parameters:
+      - description: 房间ID
+        in: query
+        name: room_id
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      - description: 账单月份
+        in: query
+        name: bill_month
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取账单列表
+      tags:
+      - 账单管理
+    post:
+      consumes:
+      - application/json
+      description: 生成账单
+      parameters:
+      - description: 账单信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.CreateBillRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 生成账单
+      tags:
+      - 账单管理
+  /bills/{id}:
+    get:
+      description: 根据ID获取账单详情
+      parameters:
+      - description: 账单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取账单详情
+      tags:
+      - 账单管理
+  /bills/{id}/pay:
+    put:
+      consumes:
+      - application/json
+      description: 标记账单已支付
+      parameters:
+      - description: 账单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 支付信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.PayBillRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 支付账单
+      tags:
+      - 账单管理
+  /bills/monthly-statistics:
+    get:
+      description: 获取年度月度统计
+      parameters:
+      - default: 2024
+        description: 年份
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取月度统计
+      tags:
+      - 账单管理
+  /bills/statistics:
+    get:
+      description: 获取账单统计
+      parameters:
+      - description: 开始日期
+        in: query
+        name: start_date
+        type: string
+      - description: 结束日期
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取账单统计
+      tags:
+      - 账单管理
+  /contracts:
+    get:
+      description: 获取合同列表
+      parameters:
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取合同列表
+      tags:
+      - 合同管理
+    post:
+      consumes:
+      - application/json
+      description: 为租客签订租房合同
+      parameters:
+      - description: 合同信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.CreateContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 签订合同
+      tags:
+      - 合同管理
+  /contracts/{id}:
+    get:
+      description: 根据ID获取合同详情
+      parameters:
+      - description: 合同ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取合同详情
+      tags:
+      - 合同管理
+  /contracts/{id}/terminate:
+    put:
+      consumes:
+      - application/json
+      description: 终止合同
+      parameters:
+      - description: 合同ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 解约原因
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.TerminateContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 解约
+      tags:
+      - 合同管理
+  /fee-rates:
+    get:
+      description: 获取水电气费率配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取费率配置
+      tags:
+      - 系统配置
+    put:
+      consumes:
+      - application/json
+      description: 更新水电气费率配置
+      parameters:
+      - description: 费率信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.UpdateFeeRateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新费率配置
+      tags:
+      - 系统配置
+  /meter-readings:
+    get:
+      description: 获取抄表记录列表
+      parameters:
+      - description: 房间ID
+        in: query
+        name: room_id
+        type: integer
+      - description: 开始日期
+        in: query
+        name: start_date
+        type: string
+      - description: 结束日期
+        in: query
+        name: end_date
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取抄表记录列表
+      tags:
+      - 抄表管理
+    post:
+      consumes:
+      - application/json
+      description: 录入水电气表读数
+      parameters:
+      - description: 抄表信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.CreateMeterReadingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建抄表记录
+      tags:
+      - 抄表管理
+  /properties:
+    get:
+      description: 获取房东的房源列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取房源列表
+      tags:
+      - 房源管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新房源
+      parameters:
+      - description: 房源信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.CreatePropertyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建房源
+      tags:
+      - 房源管理
+  /properties/{id}:
+    delete:
+      description: 删除房源
+      parameters:
+      - description: 房源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除房源
+      tags:
+      - 房源管理
+    get:
+      description: 根据ID获取房源详情
+      parameters:
+      - description: 房源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取房源详情
+      tags:
+      - 房源管理
+    put:
+      consumes:
+      - application/json
+      description: 更新房源信息
+      parameters:
+      - description: 房源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 房源信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.UpdatePropertyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新房源
+      tags:
+      - 房源管理
+  /rooms:
+    get:
+      description: 获取房间列表
+      parameters:
+      - description: 房源ID
+        in: query
+        name: property_id
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取房间列表
+      tags:
+      - 房间管理
+    post:
+      consumes:
+      - application/json
+      description: 在房源下创建房间
+      parameters:
+      - description: 房间信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.CreateRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建房间
+      tags:
+      - 房间管理
+  /rooms/{id}:
+    delete:
+      description: 删除房间
+      parameters:
+      - description: 房间ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除房间
+      tags:
+      - 房间管理
+    get:
+      description: 根据ID获取房间详情
+      parameters:
+      - description: 房间ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取房间详情
+      tags:
+      - 房间管理
+    put:
+      consumes:
+      - application/json
+      description: 更新房间信息
+      parameters:
+      - description: 房间ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 房间信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.UpdateRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新房间
+      tags:
+      - 房间管理
+  /rooms/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: 更新房间状态
+      parameters:
+      - description: 房间ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 状态
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            format: int32
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新房间状态
+      tags:
+      - 房间管理
+  /tenants:
+    get:
+      description: 获取房东的租客列表
+      parameters:
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取租客列表
+      tags:
+      - 租客管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新租客
+      parameters:
+      - description: 租客信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.CreateTenantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建租客
+      tags:
+      - 租客管理
+  /tenants/{id}:
+    delete:
+      description: 删除租客
+      parameters:
+      - description: 租客ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除租客
+      tags:
+      - 租客管理
+    get:
+      description: 根据ID获取租客详情
+      parameters:
+      - description: 租客ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取租客详情
+      tags:
+      - 租客管理
+    put:
+      consumes:
+      - application/json
+      description: 更新租客信息
+      parameters:
+      - description: 租客ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 租客信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/rental-management_internal_service.UpdateTenantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rental-management_internal_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新租客
+      tags:
+      - 租客管理
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
