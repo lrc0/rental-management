@@ -1,7 +1,10 @@
 # Build stage
-FROM golang:1.25.5 AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
+
+# 设置Go代理
+ENV GOPROXY=https://goproxy.cn,direct
 
 # 安装依赖
 RUN apk add --no-cache git
@@ -10,8 +13,14 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 RUN go mod download
 
+# 安装swag工具
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # 复制源代码
 COPY . .
+
+# 生成swagger文档
+RUN /go/bin/swag init -g cmd/server/main.go -o api/swagger
 
 # 构建
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server

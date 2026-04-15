@@ -76,6 +76,15 @@ func Init(configPath string) error {
 	// 允许环境变量覆盖
 	viper.AutomaticEnv()
 
+	// 绑定环境变量
+	viper.BindEnv("database.host", "DB_HOST")
+	viper.BindEnv("database.port", "DB_PORT")
+	viper.BindEnv("database.username", "DB_USERNAME")
+	viper.BindEnv("database.password", "DB_PASSWORD")
+	viper.BindEnv("redis.host", "REDIS_HOST")
+	viper.BindEnv("redis.port", "REDIS_PORT")
+	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}

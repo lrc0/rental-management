@@ -51,7 +51,11 @@ services:
         condition: service_healthy
     environment:
       - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root123456
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - rental-network
     restart: unless-stopped
