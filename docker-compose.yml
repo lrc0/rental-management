@@ -41,8 +41,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: rental-management:latest
     container_name: rental-app
     ports:
+      - "80:80"
       - "8080:8080"
     depends_on:
       mysql:
@@ -56,6 +58,8 @@ services:
       - DB_PASSWORD=root123456
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    volumes:
+      - ./config.yaml:/app/config.yaml
     networks:
       - rental-network
     restart: unless-stopped

@@ -1,138 +1,264 @@
-# 租房管理系统 (Rental Management System)
+# 租房管理系统
 
-一个面向个人房东的租房管理后端系统，支持房源管理、租客管理、水电气收费、租金账单等功能。
-
-## 功能特性
-
-- **多租户架构**: 支持多个房东独立管理数据
-- **房源管理**: 房源发布、编辑、上下架
-- **房间管理**: 房间信息、状态管理
-- **租客管理**: 租客档案、联系方式
-- **合同管理**: 签订、续租、解约
-- **抄表收费**: 水电气抄表、自动计算用量
-- **账单管理**: 租金账单、费用统计
-- **安全认证**: JWT认证、密码加密
-
-## 技术栈
-
-- Go 1.21+
-- Gin Web Framework
-- GORM ORM
-- MySQL 8.0
-- Redis 7.0
-- JWT认证
-- Swagger API文档
-
-## 快速开始
-
-### 环境要求 
-
-- Go 1.21+
-- MySQL 8.0+
-- Redis 7.0+
-- Docker & Docker Compose (可选)
-
-### 使用Docker Compose启动
-
-```bash
-# 启动所有服务
-make docker-up
-
-# 查看日志
-make docker-logs
-
-# 停止服务
-make docker-down
-```
-
-### 本地开发
-
-1. 安装依赖
-```bash
-make deps
-```
-
-2. 创建数据库
-```bash
-mysql -u root -p < scripts/init_db.sql
-```
-
-3. 修改配置文件 `config.yaml`
-
-4. 运行服务
-```bash
-make dev
-```
-
-### API测试
-
-服务启动后访问:
-- 健康检查: http://localhost:8080/health
-- API文档: http://localhost:8080/swagger/index.html (需生成)
-
-## API接口
-
-### 认证模块
-- `POST /api/v1/auth/register` - 用户注册
-- `POST /api/v1/auth/login` - 用户登录
-- `GET /api/v1/auth/profile` - 获取用户信息
-- `PUT /api/v1/auth/profile` - 更新用户信息
-
-### 房源管理
-- `POST /api/v1/properties` - 创建房源
-- `GET /api/v1/properties` - 房源列表
-- `GET /api/v1/properties/:id` - 房源详情
-- `PUT /api/v1/properties/:id` - 更新房源
-- `DELETE /api/v1/properties/:id` - 删除房源
-
-### 房间管理
-- `POST /api/v1/rooms` - 创建房间
-- `GET /api/v1/rooms` - 房间列表
-- `GET /api/v1/rooms/:id` - 房间详情
-- `PUT /api/v1/rooms/:id` - 更新房间
-- `DELETE /api/v1/rooms/:id` - 删除房间
-
-### 租客管理
-- `POST /api/v1/tenants` - 添加租客
-- `GET /api/v1/tenants` - 租客列表
-- `PUT /api/v1/tenants/:id` - 更新租客
-
-### 合同管理
-- `POST /api/v1/contracts` - 签订合同
-- `GET /api/v1/contracts` - 合同列表
-- `PUT /api/v1/contracts/:id/terminate` - 解约
-
-### 抄表与账单
-- `POST /api/v1/meter-readings` - 录入抄表
-- `GET /api/v1/meter-readings` - 抄表记录
-- `POST /api/v1/bills` - 生成账单
-- `GET /api/v1/bills` - 账单列表
-- `PUT /api/v1/bills/:id/pay` - 标记已付
-- `GET /api/v1/bills/statistics` - 收入统计
+一个完整的租房管理解决方案，前后端集成在一个容器中，支持 H5 和微信小程序。
 
 ## 项目结构
 
 ```
 rental-management/
-├── cmd/server/main.go          # 入口文件
-├── internal/
+├── cmd/server/main.go          # 后端入口
+├── internal/                   # 后端内部代码
 │   ├── config/                 # 配置管理
+│   ├── handler/                # HTTP处理器
 │   ├── middleware/             # 中间件
 │   ├── model/                  # 数据模型
-│   ├── handler/                # HTTP处理器
-│   ├── service/                # 业务逻辑
-│   ├── repository/             # 数据访问
-│   └── pkg/                    # 内部工具
-├── pkg/                        # 可导出包
-├── migrations/                 # 数据库迁移
-├── scripts/                    # 脚本
+│   ├── repository/             # 数据访问层
+│   ├── service/                # 业务逻辑层
+│   └── pkg/                    # 内部工具包
+├── frontend/                   # 前端项目
+│   ├── src/                    # 源代码
+│   └── nginx.conf              # Nginx配置
+├── scripts/                    # 脚本文件
+├── docker-compose.yml          # Docker编排文件
+├── Dockerfile                  # 前后端一体化镜像
+├── start.sh                    # 容器启动脚本
 ├── config.yaml                 # 配置文件
-├── docker-compose.yml          # Docker编排
-├── Dockerfile                  # Docker构建
-└── Makefile                    # 构建脚本
+└── go.mod                      # Go模块定义
 ```
 
-## Make命令
+## 技术栈
+
+### 后端
+- **框架**: Gin
+- **ORM**: GORM
+- **数据库**: MySQL 8.0
+- **缓存**: Redis 7.0
+- **认证**: JWT
+- **文档**: Swagger
+- **日志**: Zap
+
+### 前端
+- **框架**: uni-app (Vue 3)
+- **UI**: 自适应移动端
+- **支持**: H5 / 微信小程序
+
+## 功能模块
+
+- 用户认证（注册/登录）
+- 房源管理（整栋/单套/商铺）
+- 房间管理（支持月租/季租/年租）
+- 租客管理
+- 合同管理
+- 抄表记录（水/电/气）
+- 账单管理
+- 收款记录
+- 收入统计
+
+---
+
+## 部署方式
+
+### 方式一：Docker Compose（推荐）
+
+**一键启动所有服务：**
+
+```bash
+# 进入项目目录
+cd rental-management
+
+# 启动服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+```
+
+**访问地址：**
+
+| 服务 | 地址 |
+|------|------|
+| 前端 H5 | http://localhost |
+| 后端 API | http://localhost:8080 |
+| Swagger 文档 | http://localhost/swagger/index.html |
+
+> 注意：前后端在同一容器中，Nginx 代理后端 API，所有请求可通过 80 端口访问。
+
+**停止服务：**
+
+```bash
+# 停止服务
+docker-compose down
+
+# 停止并删除数据
+docker-compose down -v
+```
+
+---
+
+### 方式二：单独构建运行
+
+```bash
+# 构建镜像（包含前后端）
+docker build -t rental-management:latest .
+
+# 运行容器（需要MySQL和Redis）
+docker run -d --name rental-app \
+  -p 80:80 \
+  -p 8080:8080 \
+  -e DB_HOST=<数据库地址> \
+  -e DB_PORT=3306 \
+  -e DB_USERNAME=root \
+  -e DB_PASSWORD=<密码> \
+  -e REDIS_HOST=<Redis地址> \
+  -e REDIS_PORT=6379 \
+  rental-management:latest
+```
+
+---
+
+### 方式三：微信云托管部署
+
+1. **构建镜像：**
+```bash
+docker build -t rental-management:latest .
+```
+
+2. **推送到微信容器镜像服务**
+
+3. **云托管配置：**
+   - 内存：≥ 512MB
+   - CPU：0.5核
+   - 健康检查路径：`/health`
+   - 环境变量配置数据库和 Redis 连接信息
+
+---
+
+### 方式四：微信小程序部署
+
+```bash
+cd frontend
+
+# 安装依赖
+npm install
+
+# 构建微信小程序
+npm run build:mp-weixin
+```
+
+构建产物在 `dist/build/mp-weixin/`，使用微信开发者工具导入并发布。
+
+---
+
+## 本地开发
+
+### 后端开发
+
+```bash
+# 安装依赖
+go mod download
+
+# 启动服务（需要先启动 MySQL 和 Redis）
+go run cmd/server/main.go
+
+# 或者使用 Makefile
+make dev
+```
+
+### 前端开发
+
+```bash
+cd frontend
+
+# 安装依赖
+npm install
+
+# H5 开发模式
+npm run dev:h5
+
+# 微信小程序开发模式
+npm run dev:mp-weixin
+```
+
+---
+
+## 配置说明
+
+### 后端配置 (config.yaml)
+
+```yaml
+server:
+  port: 8080
+  mode: release    # debug/release
+
+database:
+  host: localhost
+  port: 3306
+  database: rental_management
+  username: root
+  password: root123456
+  charset: utf8mb4
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: your-secret-key
+  issuer: rental-management
+  expire_hours: 24
+
+log:
+  level: info
+  format: json
+  output: stdout
+```
+
+### 环境变量覆盖
+
+支持以下环境变量覆盖配置：
+
+| 环境变量 | 说明 |
+|----------|------|
+| DB_HOST | 数据库地址 |
+| DB_PORT | 数据库端口 |
+| DB_USERNAME | 数据库用户名 |
+| DB_PASSWORD | 数据库密码 |
+| REDIS_HOST | Redis地址 |
+| REDIS_PORT | Redis端口 |
+| REDIS_PASSWORD | Redis密码 |
+
+---
+
+## API 文档
+
+启动服务后访问 Swagger 文档：
+- http://localhost/swagger/index.html（通过 Nginx 代理）
+- http://localhost:8080/swagger/index.html（直接访问后端）
+
+### 主要接口
+
+| 模块 | 接口 | 说明 |
+|------|------|------|
+| 认证 | POST /api/v1/auth/register | 用户注册 |
+| 认证 | POST /api/v1/auth/login | 用户登录 |
+| 房源 | GET /api/v1/properties | 房源列表 |
+| 房源 | POST /api/v1/properties | 创建房源 |
+| 房间 | GET /api/v1/rooms | 房间列表 |
+| 房间 | POST /api/v1/rooms | 创建房间 |
+| 租客 | GET /api/v1/tenants | 租客列表 |
+| 合同 | POST /api/v1/contracts | 签订合同 |
+| 抄表 | POST /api/v1/meter-readings | 录入抄表 |
+| 账单 | GET /api/v1/bills | 账单列表 |
+| 账单 | GET /api/v1/bills/statistics | 收入统计 |
+
+---
+
+## Make 命令
 
 ```bash
 make build      # 编译
@@ -142,28 +268,9 @@ make clean      # 清理
 make docker-up  # 启动Docker
 make docker-down# 停止Docker
 make swag       # 生成Swagger文档
-make lint       # 代码检查
 ```
 
-## 部署
-
-### Docker部署
-
-```bash
-# 构建镜像
-docker build -t rental-management:latest .
-
-# 运行容器
-docker run -d -p 8080:8080 rental-management:latest
-```
-
-### 生产环境配置
-
-1. 修改 `config.yaml` 中的敏感配置
-2. 使用环境变量覆盖配置
-3. 配置HTTPS
-4. 配置日志收集
-5. 配置监控告警
+---
 
 ## License
 
