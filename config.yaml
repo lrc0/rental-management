@@ -4,7 +4,7 @@ server:
 
 database:
   driver: mysql
-  host: localhost
+  host: 10.18.104.12
   port: 3306
   database: rental_management
   username: root
@@ -15,8 +15,8 @@ database:
   conn_max_lifetime: 3600  # seconds
 
 redis:
-  host: localhost
-  port: 6379
+  host: dxunmemb.redis.39bmd1vy.ae3s1i1l.com
+  port: 80
   password: ""
   db: 0
   pool_size: 100
