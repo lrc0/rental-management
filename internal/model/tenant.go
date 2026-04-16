@@ -49,9 +49,9 @@ type Contract struct {
 	UpdatedAt       time.Time      `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
 
-	// 关联 - 禁用外键约束
-	Room    *Room   `gorm:"foreignKey:RoomID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"room,omitempty"`
-	Tenant  *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"tenant,omitempty"`
+	// 关联 - 不创建外键约束
+	Room    *Room   `gorm:"foreignKey:RoomID;references:ID;constraint:OnUpdate:NO ACTION,OnDelete:NO ACTION" json:"room,omitempty"`
+	Tenant  *Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnUpdate:NO ACTION,OnDelete:NO ACTION" json:"tenant,omitempty"`
 }
 
 func (Contract) TableName() string {

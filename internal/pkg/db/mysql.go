@@ -15,7 +15,10 @@ var DB *gorm.DB
 func InitMySQL(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 	var err error
 
-	gormConfig := &gorm.Config{}
+	gormConfig := &gorm.Config{
+		// 禁用外键约束创建
+		DisableForeignKeyConstraintWhenMigrating: true,
+	}
 	if config.Get().Server.Mode == "release" {
 		gormConfig.Logger = logger.Default.LogMode(logger.Silent)
 	} else {

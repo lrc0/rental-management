@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS `meter_readings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='抄表记录表';
 
 -- 账单表
-CREATE TABLE `bills` (
+CREATE TABLE IF NOT EXISTS `bills` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT UNSIGNED NOT NULL COMMENT '房东ID',
   `room_id` BIGINT UNSIGNED NOT NULL COMMENT '房间ID',
@@ -165,3 +165,6 @@ CREATE TABLE IF NOT EXISTS `payments` (
   PRIMARY KEY (`id`),
   KEY `idx_bill_id` (`bill_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收款记录表';
+
+-- 注意: 此脚本不创建外键约束，表之间的关联通过应用层维护
+-- 如需外键约束，请在应用稳定后手动添加

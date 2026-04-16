@@ -18,8 +18,8 @@ type MeterReading struct {
 	Remark             string    `gorm:"size:255" json:"remark"`
 	CreatedAt          time.Time `json:"created_at"`
 
-	// 关联 - 禁用外键约束
-	Room *Room `gorm:"foreignKey:RoomID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"room,omitempty"`
+	// 关联 - 不创建外键约束
+	Room *Room `gorm:"foreignKey:RoomID;references:ID;constraint:OnUpdate:NO ACTION,OnDelete:NO ACTION" json:"room,omitempty"`
 }
 
 func (MeterReading) TableName() string {
@@ -45,9 +45,9 @@ type Bill struct {
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 
-	// 关联 - 禁用外键约束
-	Room   *Room   `gorm:"foreignKey:RoomID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"room,omitempty"`
-	Tenant *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"tenant,omitempty"`
+	// 关联 - 不创建外键约束
+	Room   *Room   `gorm:"foreignKey:RoomID;references:ID;constraint:OnUpdate:NO ACTION,OnDelete:NO ACTION" json:"room,omitempty"`
+	Tenant *Tenant `gorm:"foreignKey:TenantID;references:ID;constraint:OnUpdate:NO ACTION,OnDelete:NO ACTION" json:"tenant,omitempty"`
 }
 
 func (Bill) TableName() string {
@@ -80,8 +80,8 @@ type Payment struct {
 	Note          string    `gorm:"size:255" json:"note"`
 	CreatedAt     time.Time `json:"created_at"`
 
-	// 关联 - 禁用外键约束
-	Bill *Bill `gorm:"foreignKey:BillID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"bill,omitempty"`
+	// 关联 - 不创建外键约束
+	Bill *Bill `gorm:"foreignKey:BillID;references:ID;constraint:OnUpdate:NO ACTION,OnDelete:NO ACTION" json:"bill,omitempty"`
 }
 
 func (Payment) TableName() string {
