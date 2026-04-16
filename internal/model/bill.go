@@ -31,7 +31,7 @@ type Bill struct {
 	ID               uint       `gorm:"primaryKey" json:"id"`
 	UserID           uint       `gorm:"index:idx_user_month;not null" json:"user_id"`
 	RoomID           uint       `gorm:"index" json:"room_id"`
-	TenantID         uint       `gorm:"index" json:"tenant_id"`
+	TenantID         *uint      `gorm:"index" json:"tenant_id"`
 	BillType         int8       `gorm:"comment:1租金 2水费 3电费 4气费 5综合账单" json:"bill_type"`
 	BillMonth        string     `gorm:"size:7;index:idx_user_month" json:"bill_month"` // 2024-01
 	Amount           float64    `gorm:"type:decimal(10,2)" json:"amount"`              // 总金额

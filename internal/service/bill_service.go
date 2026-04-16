@@ -112,14 +112,15 @@ func (s *BillService) ListMeterReadings(userID uint, roomID uint, startDate, end
 
 // CreateBillRequest 生成账单请求
 type CreateBillRequest struct {
-	RoomID      uint   `json:"room_id" binding:"required"`
-	TenantID    uint   `json:"tenant_id"`
-	BillMonth   string `json:"bill_month" binding:"required"` // YYYY-MM
-	DueDate     string `json:"due_date"`
-	RentFee     float64 `json:"rent_fee"`
-	WaterFee    float64 `json:"water_fee"`
+	RoomID         uint    `json:"room_id" binding:"required"`
+	TenantID       *uint   `json:"tenant_id"`
+	BillMonth      string  `json:"bill_month" binding:"required"` // YYYY-MM
+	DueDate        string  `json:"due_date"`
+	RentFee        float64 `json:"rent_fee"`
+	WaterFee       float64 `json:"water_fee"`
 	ElectricityFee float64 `json:"electricity_fee"`
-	GasFee      float64 `json:"gas_fee"`
+	GasFee         float64 `json:"gas_fee"`
+	AutoCalculate  bool    `json:"auto_calculate"` // 是否自动计算水电气费用
 }
 
 // CreateBill 生成账单
@@ -139,20 +140,89 @@ func (s *BillService) CreateBill(userID uint, req *CreateBillRequest) (*model.Bi
 		return nil, errors.New("该月份账单已存在")
 	}
 
+	// 获取租客ID
+	var tenantID *uint
+	if req.TenantID != nil && *req.TenantID > 0 {
+		tenantID = req.TenantID
+	} else {
+		// 尝试获取当前有效合同的租客
+		contract, err := s.contractRepo.FindActiveByRoomID(room.ID)
+		if err == nil && contract != nil {
+			tenantID = &contract.TenantID
+		}
+	}
+
+	// 初始化费用
+	waterFee := req.WaterFee
+	electricityFee := req.ElectricityFee
+	gasFee := req.GasFee
+	rentFee := req.RentFee
+
+	// 自动计算水电气费用
+	if req.AutoCalculate {
+		// 获取费率配置
+		feeRate, err := s.userRepo.GetFeeRateByUserID(userID)
+		if err != nil {
+			feeRate = &model.FeeRate{
+				WaterRate:       0,
+				ElectricityRate: 0,
+				GasRate:         0,
+			}
+		}
+
+		// 解析账单月份，获取该月的起止日期
+		monthStart, err := time.Parse("2006-01", req.BillMonth)
+		if err == nil {
+			monthEnd := monthStart.AddDate(0, 1, 0)
+
+			// 获取本月抄表记录
+			readings, _, err := s.billRepo.ListMeterReadings(userID, room.ID, &monthStart, &monthEnd, 1, 100)
+			if err == nil && len(readings) > 0 {
+				// 使用最新的一条抄表记录
+				latestReading := readings[0]
+
+				// 计算费用（用量已经在抄表时计算好了）
+				if waterFee == 0 && latestReading.WaterUsage > 0 && feeRate.WaterRate > 0 {
+					waterFee = latestReading.WaterUsage * feeRate.WaterRate
+				}
+				if electricityFee == 0 && latestReading.ElectricityUsage > 0 && feeRate.ElectricityRate > 0 {
+					electricityFee = latestReading.ElectricityUsage * feeRate.ElectricityRate
+				}
+				if gasFee == 0 && latestReading.GasUsage > 0 && feeRate.GasRate > 0 {
+					gasFee = latestReading.GasUsage * feeRate.GasRate
+				}
+			}
+		}
+	}
+
+	// 如果没有指定租金，尝试从合同获取
+	if rentFee == 0 {
+		contract, err := s.contractRepo.FindActiveByRoomID(room.ID)
+		if err == nil && contract != nil {
+			rentFee = contract.MonthlyRent
+		} else {
+			// 使用房间租金
+			rentFee = room.RentAmount
+			if rentFee == 0 {
+				rentFee = room.MonthlyRent
+			}
+		}
+	}
+
 	// 计算总金额
-	amount := req.RentFee + req.WaterFee + req.ElectricityFee + req.GasFee
+	amount := rentFee + waterFee + electricityFee + gasFee
 
 	bill := &model.Bill{
 		UserID:         userID,
 		RoomID:         req.RoomID,
-		TenantID:       req.TenantID,
+		TenantID:       tenantID,
 		BillType:       model.BillTypeCombined,
 		BillMonth:      req.BillMonth,
 		Amount:         amount,
-		WaterFee:       req.WaterFee,
-		ElectricityFee: req.ElectricityFee,
-		GasFee:         req.GasFee,
-		RentFee:        req.RentFee,
+		WaterFee:       waterFee,
+		ElectricityFee: electricityFee,
+		GasFee:         gasFee,
+		RentFee:        rentFee,
 		Status:         model.BillStatusPending,
 	}
 
@@ -195,33 +265,33 @@ func (s *BillService) GenerateBillFromReadings(userID, roomID uint, billMonth st
 	}
 
 	// 获取当前有效合同
-	var tenantID uint
+	var tenantID *uint
 	var monthlyRent float64
 	contract, err := s.contractRepo.FindActiveByRoomID(room.ID)
 	if err == nil && contract != nil {
-		tenantID = contract.TenantID
+		tenantID = &contract.TenantID
 		monthlyRent = contract.MonthlyRent
 	}
 
 	// 解析月份，获取该月的抄表记录
 	monthStart, _ := time.Parse("2006-01", billMonth)
-	_ = monthStart // 暂时未使用，后续可根据抄表记录计算
+	_ = monthStart // 暂时未使用，后续可根据抄表记录计算用量
 
 	// 这里简化处理，实际应该根据抄表记录计算用量
 	// 实际项目中需要更复杂的逻辑
 
 	bill := &model.Bill{
-		UserID:     userID,
-		RoomID:     room.ID,
-		TenantID:   tenantID,
-		BillType:   model.BillTypeCombined,
-		BillMonth:  billMonth,
-		RentFee:    monthlyRent,
-		WaterFee:   0,
+		UserID:         userID,
+		RoomID:         room.ID,
+		TenantID:       tenantID,
+		BillType:       model.BillTypeCombined,
+		BillMonth:      billMonth,
+		RentFee:        monthlyRent,
+		WaterFee:       0,
 		ElectricityFee: 0,
-		GasFee:    0,
-		Amount:    monthlyRent,
-		Status:    model.BillStatusPending,
+		GasFee:         0,
+		Amount:         monthlyRent,
+		Status:         model.BillStatusPending,
 	}
 
 	if err := s.billRepo.CreateBill(bill); err != nil {

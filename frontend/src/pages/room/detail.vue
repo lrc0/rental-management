@@ -259,7 +259,7 @@ const submitMeter = async () => {
 const addBill = () => {
   const today = new Date()
   billForm.bill_month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-  billForm.rent_fee = String(room.value.monthly_rent || '')
+  billForm.rent_fee = String(room.value.rent_amount || room.value.monthly_rent || '')
   billForm.water_fee = ''
   billForm.electricity_fee = ''
   showBill.value = true
@@ -277,7 +277,8 @@ const submitBill = async () => {
       bill_month: billForm.bill_month,
       rent_fee: parseFloat(billForm.rent_fee) || 0,
       water_fee: parseFloat(billForm.water_fee) || 0,
-      electricity_fee: parseFloat(billForm.electricity_fee) || 0
+      electricity_fee: parseFloat(billForm.electricity_fee) || 0,
+      auto_calculate: true  // 自动计算水电气费用
     })
     uni.showToast({ title: '创建成功', icon: 'success' })
     showBill.value = false
