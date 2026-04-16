@@ -1,0 +1,1 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("./common/vendor.js");Math;const n={onLaunch(){e.index.getStorageSync("token")||e.index.reLaunch({url:"/pages/login/index"})}};function t(){const t=e.createSSRApp(n),o=e.createPinia();return t.use(o),{app:t,pinia:o}}t().app.mount("#app"),exports.createApp=t;

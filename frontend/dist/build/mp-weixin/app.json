@@ -1,0 +1,56 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/property/list",
+    "pages/property/detail",
+    "pages/room/list",
+    "pages/room/detail",
+    "pages/tenant/list",
+    "pages/tenant/detail",
+    "pages/contract/list",
+    "pages/bill/list",
+    "pages/bill/statistics",
+    "pages/meter/list",
+    "pages/login/index",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "租房管理",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f8f8f8"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#007AFF",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/property/list",
+        "text": "房源",
+        "iconPath": "static/tabbar/property.png",
+        "selectedIconPath": "static/tabbar/property-active.png"
+      },
+      {
+        "pagePath": "pages/bill/list",
+        "text": "账单",
+        "iconPath": "static/tabbar/bill.png",
+        "selectedIconPath": "static/tabbar/bill-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "usingComponents": {}
+}
