@@ -6,20 +6,20 @@ import (
 
 // MeterReading 抄表记录表
 type MeterReading struct {
-	ID                  uint      `gorm:"primaryKey" json:"id"`
-	RoomID              uint      `gorm:"index:idx_room_date;not null" json:"room_id"`
-	ReadingDate         time.Time `gorm:"type:date;index:idx_room_date" json:"reading_date"`
-	WaterReading        float64   `gorm:"type:decimal(10,2)" json:"water_reading"`        // 水表读数
-	ElectricityReading  float64   `gorm:"type:decimal(10,2)" json:"electricity_reading"`  // 电表读数
-	GasReading          float64   `gorm:"type:decimal(10,2)" json:"gas_reading"`          // 气表读数
-	WaterUsage          float64   `gorm:"type:decimal(10,2)" json:"water_usage"`          // 用水量(计算值)
-	ElectricityUsage    float64   `gorm:"type:decimal(10,2)" json:"electricity_usage"`    // 用电量(计算值)
-	GasUsage            float64   `gorm:"type:decimal(10,2)" json:"gas_usage"`            // 用气量(计算值)
-	Remark              string    `gorm:"size:255" json:"remark"`
-	CreatedAt           time.Time `json:"created_at"`
+	ID                 uint      `gorm:"primaryKey" json:"id"`
+	RoomID             uint      `gorm:"index:idx_room_date;not null" json:"room_id"`
+	ReadingDate        time.Time `gorm:"type:date;index:idx_room_date" json:"reading_date"`
+	WaterReading       float64   `gorm:"type:decimal(10,2)" json:"water_reading"`       // 水表读数
+	ElectricityReading float64   `gorm:"type:decimal(10,2)" json:"electricity_reading"` // 电表读数
+	GasReading         float64   `gorm:"type:decimal(10,2)" json:"gas_reading"`         // 气表读数
+	WaterUsage         float64   `gorm:"type:decimal(10,2)" json:"water_usage"`         // 用水量(计算值)
+	ElectricityUsage   float64   `gorm:"type:decimal(10,2)" json:"electricity_usage"`   // 用电量(计算值)
+	GasUsage           float64   `gorm:"type:decimal(10,2)" json:"gas_usage"`           // 用气量(计算值)
+	Remark             string    `gorm:"size:255" json:"remark"`
+	CreatedAt          time.Time `json:"created_at"`
 
-	// 关联
-	Room *Room `gorm:"foreignKey:RoomID" json:"room,omitempty"`
+	// 关联 - 禁用外键约束
+	Room *Room `gorm:"foreignKey:RoomID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"room,omitempty"`
 }
 
 func (MeterReading) TableName() string {
@@ -30,7 +30,7 @@ func (MeterReading) TableName() string {
 type Bill struct {
 	ID               uint       `gorm:"primaryKey" json:"id"`
 	UserID           uint       `gorm:"index:idx_user_month;not null" json:"user_id"`
-	RoomID           uint       `gorm:"index" json:"room_id"`
+	RoomID           uint       `gorm:"index;not null" json:"room_id"`
 	TenantID         *uint      `gorm:"index" json:"tenant_id"`
 	BillType         int8       `gorm:"comment:1租金 2水费 3电费 4气费 5综合账单" json:"bill_type"`
 	BillMonth        string     `gorm:"size:7;index:idx_user_month" json:"bill_month"` // 2024-01
@@ -45,9 +45,9 @@ type Bill struct {
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 
-	// 关联
-	Room   *Room   `gorm:"foreignKey:RoomID" json:"room,omitempty"`
-	Tenant *Tenant `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
+	// 关联 - 禁用外键约束
+	Room   *Room   `gorm:"foreignKey:RoomID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"room,omitempty"`
+	Tenant *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"tenant,omitempty"`
 }
 
 func (Bill) TableName() string {
@@ -80,8 +80,8 @@ type Payment struct {
 	Note          string    `gorm:"size:255" json:"note"`
 	CreatedAt     time.Time `json:"created_at"`
 
-	// 关联
-	Bill *Bill `gorm:"foreignKey:BillID" json:"bill,omitempty"`
+	// 关联 - 禁用外键约束
+	Bill *Bill `gorm:"foreignKey:BillID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"bill,omitempty"`
 }
 
 func (Payment) TableName() string {

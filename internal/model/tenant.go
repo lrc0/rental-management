@@ -35,23 +35,23 @@ const (
 
 // Contract 合同表
 type Contract struct {
-	ID          uint           `gorm:"primaryKey" json:"id"`
-	RoomID      uint           `gorm:"index;not null" json:"room_id"`
-	TenantID    uint           `gorm:"index;not null" json:"tenant_id"`
-	StartDate   time.Time      `gorm:"type:date" json:"start_date"`
-	EndDate     time.Time      `gorm:"type:date" json:"end_date"`
-	MonthlyRent float64        `gorm:"type:decimal(10,2)" json:"monthly_rent"`
-	Deposit     float64        `gorm:"type:decimal(10,2)" json:"deposit"` // 押金
-	PaymentDay  int8           `gorm:"comment:每月几号交租" json:"payment_day"`
-	Status      int8           `gorm:"default:1;comment:1生效 2已到期 3已解约" json:"status"`
-	TerminateReason string     `gorm:"size:255" json:"terminate_reason"`   // 解约原因
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID              uint           `gorm:"primaryKey" json:"id"`
+	RoomID          uint           `gorm:"index;not null" json:"room_id"`
+	TenantID        uint           `gorm:"index;not null" json:"tenant_id"`
+	StartDate       time.Time      `gorm:"type:date" json:"start_date"`
+	EndDate         time.Time      `gorm:"type:date" json:"end_date"`
+	MonthlyRent     float64        `gorm:"type:decimal(10,2)" json:"monthly_rent"`
+	Deposit         float64        `gorm:"type:decimal(10,2)" json:"deposit"` // 押金
+	PaymentDay      int8           `gorm:"comment:每月几号交租" json:"payment_day"`
+	Status          int8           `gorm:"default:1;comment:1生效 2已到期 3已解约" json:"status"`
+	TerminateReason string         `gorm:"size:255" json:"terminate_reason"` // 解约原因
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
 
-	// 关联
-	Room    *Room   `gorm:"foreignKey:RoomID" json:"room,omitempty"`
-	Tenant  *Tenant `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
+	// 关联 - 禁用外键约束
+	Room    *Room   `gorm:"foreignKey:RoomID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"room,omitempty"`
+	Tenant  *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"tenant,omitempty"`
 }
 
 func (Contract) TableName() string {

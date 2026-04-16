@@ -57,7 +57,9 @@ CREATE TABLE IF NOT EXISTS `rooms` (
   `room_number` VARCHAR(20) NOT NULL COMMENT '房间号',
   `floor` INT DEFAULT 0 COMMENT '楼层',
   `area` DECIMAL(10,2) DEFAULT 0.00 COMMENT '面积(平米)',
-  `monthly_rent` DECIMAL(10,2) DEFAULT 0.00 COMMENT '月租金',
+  `rent_type` TINYINT DEFAULT 1 COMMENT '租金类型: 1月租 2季租 3年租',
+  `rent_amount` DECIMAL(10,2) DEFAULT 0.00 COMMENT '租金金额',
+  `monthly_rent` DECIMAL(10,2) DEFAULT 0.00 COMMENT '月租金(兼容旧数据)',
   `status` TINYINT DEFAULT 1 COMMENT '状态: 1空置 2已租 3维修中',
   `facilities` JSON COMMENT '设施配置',
   `remark` VARCHAR(255) DEFAULT '' COMMENT '备注',
@@ -128,7 +130,7 @@ CREATE TABLE IF NOT EXISTS `meter_readings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='抄表记录表';
 
 -- 账单表
-CREATE TABLE IF NOT EXISTS `bills` (
+CREATE TABLE `bills` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT UNSIGNED NOT NULL COMMENT '房东ID',
   `room_id` BIGINT UNSIGNED NOT NULL COMMENT '房间ID',

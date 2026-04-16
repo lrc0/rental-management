@@ -19,8 +19,8 @@ type Property struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 
-	// 关联
-	Rooms []Room `gorm:"foreignKey:PropertyID" json:"rooms,omitempty"`
+	// 关联 - 禁用外键约束
+	Rooms []Room `gorm:"foreignKey:PropertyID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"rooms,omitempty"`
 }
 
 func (Property) TableName() string {
@@ -44,8 +44,8 @@ type Room struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 
-	// 关联
-	Property *Property `gorm:"foreignKey:PropertyID" json:"property,omitempty"`
+	// 关联 - 禁用外键约束
+	Property *Property `gorm:"foreignKey:PropertyID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"property,omitempty"`
 }
 
 func (Room) TableName() string {
