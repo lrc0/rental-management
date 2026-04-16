@@ -1,12 +1,12 @@
 <template>
   <view class="page-container">
     <view class="room-list">
-      <view class="room-card" v-for="room in list" :key="room.id" @click="goDetail(room.id)">
-        <view class="room-header">
+      <view class="room-card" v-for="room in list" :key="room.id">
+        <view class="room-header" @click="goDetail(room.id)">
           <view class="room-number">{{ room.room_number }}</view>
           <view class="room-status" :class="getStatusClass(room.status)">{{ getStatusText(room.status) }}</view>
         </view>
-        <view class="room-info">
+        <view class="room-info" @click="goDetail(room.id)">
           <view class="info-row">
             <text class="info-label">所属房源</text>
             <text class="info-value">{{ room.property_name || '-' }}</text>
@@ -24,9 +24,11 @@
           </view>
         </view>
         <view class="room-actions">
-          <button class="action-btn" @click.stop="changeStatus(room)">
-            {{ room.status === 1 ? '标记已租' : room.status === 2 ? '标记空置' : '标记维修完成' }}
+          <button class="action-btn edit" @click.stop="editRoom(room)">编辑</button>
+          <button class="action-btn status" @click.stop="changeStatus(room)">
+            {{ room.status === 1 ? '标记已租' : room.status === 2 ? '标记空置' : '完成维修' }}
           </button>
+          <button class="action-btn delete" @click.stop="deleteRoom(room)">删除</button>
         </view>
       </view>
       <view class="empty" v-if="list.length === 0 && !loading">
@@ -37,11 +39,11 @@
 
     <view class="add-btn" @click="addRoom"><text>+</text></view>
 
-    <!-- 添加房间弹窗 -->
+    <!-- 添加/编辑房间弹窗 -->
     <view class="modal" v-if="showAdd">
       <view class="modal-content">
-        <view class="popup-title">添加房间</view>
-        <view class="form-item">
+        <view class="popup-title">{{ editingRoom ? '编辑房间' : '添加房间' }}</view>
+        <view class="form-item" v-if="!editingRoom">
           <text class="form-label">所属房源</text>
           <picker :range="propertyList" range-key="name" @change="onPropertyChange">
             <view class="form-picker">{{ selectedProperty?.name || '请选择' }} ›</view>
@@ -83,6 +85,7 @@ const list = ref([])
 const showAdd = ref(false)
 const propertyList = ref([])
 const selectedProperty = ref(null)
+const editingRoom = ref(null)
 const formData = reactive({ room_number: '', floor: '', rent_type: 1, rent_amount: '' })
 
 const rentTypes = [
@@ -116,12 +119,39 @@ const loadProperties = async () => {
 }
 
 const addRoom = () => {
+  editingRoom.value = null
   selectedProperty.value = null
   formData.room_number = ''
   formData.floor = ''
   formData.rent_type = 1
   formData.rent_amount = ''
   showAdd.value = true
+}
+
+const editRoom = (room) => {
+  editingRoom.value = room
+  selectedProperty.value = propertyList.value.find(p => p.id === room.property_id)
+  formData.room_number = room.room_number
+  formData.floor = String(room.floor || '')
+  formData.rent_type = room.rent_type || 1
+  formData.rent_amount = String(room.rent_amount || room.monthly_rent || '')
+  showAdd.value = true
+}
+
+const deleteRoom = (room) => {
+  uni.showModal({
+    title: '确认删除',
+    content: `确定要删除房间 ${room.room_number} 吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await roomApi.delete(room.id)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          loadList()
+        } catch (error) { uni.showToast({ title: error.message || '删除失败', icon: 'none' }) }
+      }
+    }
+  })
 }
 
 const onPropertyChange = (e) => {
@@ -133,19 +163,24 @@ const onRentTypeChange = (e) => {
 }
 
 const submitForm = async () => {
-  if (!selectedProperty.value) { uni.showToast({ title: '请选择房源', icon: 'none' }); return }
+  if (!editingRoom.value && !selectedProperty.value) { uni.showToast({ title: '请选择房源', icon: 'none' }); return }
   if (!formData.room_number) { uni.showToast({ title: '请输入房间号', icon: 'none' }); return }
   submitting.value = true
   try {
-    await roomApi.create({
-      property_id: selectedProperty.value.id,
+    const data = {
       room_number: formData.room_number,
       floor: parseInt(formData.floor) || 0,
       rent_type: formData.rent_type,
       rent_amount: parseFloat(formData.rent_amount) || 0,
       monthly_rent: formData.rent_type === 1 ? parseFloat(formData.rent_amount) || 0 : 0
-    })
-    uni.showToast({ title: '添加成功', icon: 'success' })
+    }
+    if (editingRoom.value) {
+      await roomApi.update(editingRoom.value.id, data)
+    } else {
+      data.property_id = selectedProperty.value.id
+      await roomApi.create(data)
+    }
+    uni.showToast({ title: editingRoom.value ? '修改成功' : '添加成功', icon: 'success' })
     showAdd.value = false
     loadList()
   } catch (error) { console.error(error) } finally { submitting.value = false }
@@ -252,18 +287,31 @@ onPullDownRefresh(() => loadList())
 }
 
 .room-actions {
+  display: flex;
+  gap: 16rpx;
   margin-top: 20rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #f0f0f0;
 }
 
 .action-btn {
-  width: 100%;
+  flex: 1;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  font-size: 26rpx;
+  text-align: center;
+}
+.action-btn.edit {
+  background: #E3F2FD;
+  color: #2196F3;
+}
+.action-btn.status {
   background: #007AFF;
   color: #fff;
-  border-radius: 8rpx;
-  padding: 20rpx;
-  font-size: 28rpx;
+}
+.action-btn.delete {
+  background: #FFEBEE;
+  color: #F44336;
 }
 
 .add-btn {
