@@ -116,7 +116,7 @@ const loadProperty = async () => {
 
 const loadRooms = async () => {
   try {
-    const res = await roomApi.getList({ property_id: propertyId.value, page: 1, page_size: 100 })
+    const res = await roomApi.getList({ property_id: parseInt(propertyId.value) || 0, page: 1, page_size: 100 })
     rooms.value = res.list || []
   } catch (error) { console.error(error) }
 }
@@ -158,10 +158,10 @@ const submitRoom = async () => {
   submitting.value = true
   try {
     const data = {
-      property_id: propertyId.value,
+      property_id: parseInt(propertyId.value) || 0,
       room_number: roomForm.room_number,
       floor: parseInt(roomForm.floor) || 0,
-      rent_type: roomForm.rent_type,
+      rent_type: parseInt(roomForm.rent_type) || 1,
       rent_amount: parseFloat(roomForm.rent_amount) || 0,
       monthly_rent: roomForm.rent_type === 1 ? parseFloat(roomForm.rent_amount) || 0 : 0
     }

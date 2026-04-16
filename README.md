@@ -17,7 +17,11 @@ rental-management/
 │   └── pkg/                    # 内部工具包
 ├── frontend/                   # 前端项目
 │   ├── src/                    # 源代码
-│   └── nginx.conf              # Nginx配置
+│   │   └── utils/
+│   │       ├── config.js       # 微信云托管配置
+│   │       └── request.js      # API请求封装
+│   ├── nginx.conf              # Nginx配置
+│   └── project.config.json     # 小程序配置
 ├── scripts/                    # 脚本文件
 ├── docker-compose.yml          # Docker编排文件
 ├── Dockerfile                  # 前后端一体化镜像
@@ -58,7 +62,7 @@ rental-management/
 
 ## 部署方式
 
-### 方式一：Docker Compose（推荐）
+### 方式一：Docker Compose（推荐本地开发）
 
 **一键启动所有服务：**
 
@@ -98,45 +102,74 @@ docker-compose down -v
 
 ---
 
-### 方式二：单独构建运行
+### 方式二：微信云托管部署（推荐生产环境）
+
+#### 1. 微信云托管配置信息
+
+```
+服务ID：prod-6gomfrgz543fc0f3
+服务名称：rental-managent
+```
+
+#### 2. 构建并推送镜像
 
 ```bash
-# 构建镜像（包含前后端）
+# 构建镜像
 docker build -t rental-management:latest .
 
-# 运行容器（需要MySQL和Redis）
-docker run -d --name rental-app \
-  -p 80:80 \
-  -p 8080:8080 \
-  -e DB_HOST=<数据库地址> \
-  -e DB_PORT=3306 \
-  -e DB_USERNAME=root \
-  -e DB_PASSWORD=<密码> \
-  -e REDIS_HOST=<Redis地址> \
-  -e REDIS_PORT=6379 \
-  rental-management:latest
+# 标记镜像（替换为你的镜像仓库地址）
+docker tag rental-management:latest ccr.ccs.tencentyun.com/你的命名空间/rental-management:latest
+
+# 推送镜像
+docker push ccr.ccs.tencentyun.com/你的命名空间/rental-management:latest
 ```
+
+#### 3. 微信云托管控制台配置
+
+| 配置项 | 推荐值 |
+|--------|--------|
+| 内存 | ≥ 512MB |
+| CPU | 0.5核 |
+| 最小实例数 | 1 |
+| 最大实例数 | 10 |
+| 健康检查路径 | `/health` |
+| 健康检查端口 | 80 |
+
+#### 4. 环境变量配置
+
+在微信云托管控制台设置以下环境变量：
+
+| 环境变量 | 说明 | 示例 |
+|----------|------|------|
+| DB_HOST | 数据库地址 | 你的MySQL地址 |
+| DB_PORT | 数据库端口 | 3306 |
+| DB_USERNAME | 数据库用户名 | root |
+| DB_PASSWORD | 数据库密码 | your_password |
+| DB_DATABASE | 数据库名 | rental_management |
+| REDIS_HOST | Redis地址 | 你的Redis地址 |
+| REDIS_PORT | Redis端口 | 6379 |
+| REDIS_PASSWORD | Redis密码 | your_redis_password |
+
+#### 5. 前端配置说明
+
+前端已配置微信云托管调用，配置文件位于 `frontend/src/utils/config.js`：
+
+```javascript
+// 微信云托管配置
+export const cloudConfig = {
+  serviceId: 'prod-6gomfrgz543fc0f3',
+  serviceName: 'rental-managent',
+  // ...
+}
+```
+
+**调用方式：**
+- **H5 部署**：使用相对路径 `/api/v1`，通过 Nginx 代理到后端
+- **微信小程序**：使用服务名调用 `http://rental-managent/api/v1`
 
 ---
 
-### 方式三：微信云托管部署
-
-1. **构建镜像：**
-```bash
-docker build -t rental-management:latest .
-```
-
-2. **推送到微信容器镜像服务**
-
-3. **云托管配置：**
-   - 内存：≥ 512MB
-   - CPU：0.5核
-   - 健康检查路径：`/health`
-   - 环境变量配置数据库和 Redis 连接信息
-
----
-
-### 方式四：微信小程序部署
+### 方式三：微信小程序单独部署
 
 ```bash
 cd frontend
@@ -149,6 +182,14 @@ npm run build:mp-weixin
 ```
 
 构建产物在 `dist/build/mp-weixin/`，使用微信开发者工具导入并发布。
+
+**小程序调用云托管服务：**
+
+小程序会自动通过服务名调用同一环境下的后端服务：
+```javascript
+// 微信小程序环境自动使用服务名调用
+const url = 'http://rental-managent/api/v1/...'
+```
 
 ---
 

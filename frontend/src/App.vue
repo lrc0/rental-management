@@ -1,10 +1,34 @@
 <script>
+import cloudConfig from './utils/config'
+
 export default {
   onLaunch() {
+    console.log('App Launch')
+
+    // #ifdef MP-WEIXIN
+    // 微信小程序 - 初始化云开发环境
+    if (wx.cloud) {
+      wx.cloud.init({
+        env: cloudConfig.env,
+        traceUser: true
+      })
+      console.log('微信云开发初始化成功, env:', cloudConfig.env)
+    } else {
+      console.warn('请使用 2.2.3 或以上的基础库以使用云能力')
+    }
+    // #endif
+
+    // 检查登录状态
     const token = uni.getStorageSync('token')
     if (!token) {
       uni.reLaunch({ url: '/pages/login/index' })
     }
+  },
+  onShow() {
+    console.log('App Show')
+  },
+  onHide() {
+    console.log('App Hide')
   }
 }
 </script>

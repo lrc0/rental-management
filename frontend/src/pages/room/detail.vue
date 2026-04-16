@@ -213,14 +213,14 @@ const loadRoom = async () => {
 
 const loadMeters = async () => {
   try {
-    const res = await meterApi.getList({ room_id: roomId.value, page: 1, page_size: 10 })
+    const res = await meterApi.getList({ room_id: parseInt(roomId.value) || 0, page: 1, page_size: 10 })
     meters.value = res.list || []
   } catch (error) { console.error(error) }
 }
 
 const loadBills = async () => {
   try {
-    const res = await billApi.getList({ room_id: roomId.value, page: 1, page_size: 10 })
+    const res = await billApi.getList({ room_id: parseInt(roomId.value) || 0, page: 1, page_size: 10 })
     bills.value = res.list || []
   } catch (error) { console.error(error) }
 }
@@ -244,7 +244,7 @@ const submitMeter = async () => {
     const today = new Date()
     const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     await meterApi.create({
-      room_id: roomId.value,
+      room_id: parseInt(roomId.value) || 0,
       reading_date: dateStr,
       water_reading: parseFloat(meterForm.water) || 0,
       electricity_reading: parseFloat(meterForm.electricity) || 0,
@@ -273,7 +273,7 @@ const submitBill = async () => {
   submitting.value = true
   try {
     await billApi.create({
-      room_id: roomId.value,
+      room_id: parseInt(roomId.value) || 0,
       bill_month: billForm.bill_month,
       rent_fee: parseFloat(billForm.rent_fee) || 0,
       water_fee: parseFloat(billForm.water_fee) || 0,

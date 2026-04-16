@@ -97,10 +97,21 @@ func (r *RoomRepository) UpdateStatus(id uint, status int8) error {
 
 // RoomWithTenant 房间带租客信息
 type RoomWithTenant struct {
-	model.Room
-	TenantID   *uint  `json:"tenant_id"`
-	TenantName string `json:"tenant_name"`
-	TenantPhone string `json:"tenant_phone"`
+	ID           uint    `json:"id"`
+	PropertyID   uint    `json:"property_id"`
+	PropertyName string  `json:"property_name"`
+	RoomNumber   string  `json:"room_number"`
+	Floor        int     `json:"floor"`
+	Area         float64 `json:"area"`
+	RentType     int8    `json:"rent_type"`
+	RentAmount   float64 `json:"rent_amount"`
+	MonthlyRent  float64 `json:"monthly_rent"`
+	Status       int8    `json:"status"`
+	Facilities   string  `json:"facilities"`
+	Remark       string  `json:"remark"`
+	TenantID     *uint   `json:"tenant_id"`
+	TenantName   string  `json:"tenant_name"`
+	TenantPhone  string  `json:"tenant_phone"`
 }
 
 // ListWithTenant 获取房间列表（包含当前租客信息）
@@ -122,7 +133,8 @@ func (r *RoomRepository) ListWithTenant(userID uint, propertyID uint, status *in
 	// 查询房间及其当前租客
 	offset := (page - 1) * pageSize
 	query := `
-		SELECT r.*, p.id as property_id, p.name as property_name, p.user_id,
+		SELECT r.id, r.property_id, p.name as property_name, r.room_number, r.floor, r.area,
+			r.rent_type, r.rent_amount, r.monthly_rent, r.status, r.facilities, r.remark,
 			c.tenant_id, t.name as tenant_name, t.phone as tenant_phone
 		FROM rooms r
 		JOIN properties p ON r.property_id = p.id AND p.deleted_at IS NULL
