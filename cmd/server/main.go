@@ -106,7 +106,7 @@ func main() {
 	billRepo := repository.NewBillRepository(database)
 
 	// 初始化Service
-	authService := service.NewAuthService(userRepo)
+	authService := service.NewAuthService(userRepo, propertyRepo, roomRepo, tenantRepo, billRepo)
 	propertyService := service.NewPropertyService(propertyRepo, roomRepo)
 	tenantService := service.NewTenantService(tenantRepo, contractRepo, roomRepo, userRepo)
 	billService := service.NewBillService(billRepo, roomRepo, userRepo, contractRepo)
@@ -152,6 +152,9 @@ func main() {
 			protected.PUT("/auth/profile", authHandler.UpdateProfile)
 			protected.PUT("/auth/password", authHandler.ChangePassword)
 
+			// 统计
+			protected.GET("/statistics", authHandler.GetStatistics)
+
 			// 房源管理
 			protected.POST("/properties", propertyHandler.CreateProperty)
 			protected.GET("/properties", propertyHandler.ListProperties)
@@ -178,11 +181,14 @@ func main() {
 			protected.POST("/contracts", tenantHandler.CreateContract)
 			protected.GET("/contracts", tenantHandler.ListContracts)
 			protected.GET("/contracts/:id", tenantHandler.GetContract)
-			protected.PUT("/contracts/:id/terminate", tenantHandler.TerminateContract)
+			protected.PUT("/contracts/:id", tenantHandler.UpdateContract)
+				protected.PUT("/contracts/:id/terminate", tenantHandler.TerminateContract)
+				protected.DELETE("/contracts/:id", tenantHandler.DeleteContract)
 
 			// 抄表管理
 			protected.POST("/meter-readings", billHandler.CreateMeterReading)
 			protected.GET("/meter-readings", billHandler.ListMeterReadings)
+			protected.DELETE("/meter-readings/:id", billHandler.DeleteMeterReading)
 
 			// 账单管理
 			protected.POST("/bills", billHandler.CreateBill)
@@ -191,6 +197,7 @@ func main() {
 			protected.GET("/bills/monthly-statistics", billHandler.GetMonthlyStatistics)
 			protected.GET("/bills/:id", billHandler.GetBill)
 			protected.PUT("/bills/:id/pay", billHandler.PayBill)
+			protected.DELETE("/bills/:id", billHandler.DeleteBill)
 
 			// 系统配置
 			protected.GET("/fee-rates", billHandler.GetFeeRate)

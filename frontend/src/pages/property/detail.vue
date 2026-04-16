@@ -19,6 +19,10 @@
         <text class="info-label">房间数</text>
         <text class="info-value">{{ property.total_rooms }}间</text>
       </view>
+      <view class="card-actions">
+        <button class="btn-edit" @click="editProperty">编辑</button>
+        <button class="btn-delete" @click="deleteProperty">删除</button>
+      </view>
     </view>
 
     <view class="section">
@@ -27,8 +31,8 @@
         <text class="section-action" @click="addRoom">+ 添加房间</text>
       </view>
       <view class="room-list">
-        <view class="room-item" v-for="room in rooms" :key="room.id" @click="goRoomDetail(room.id)">
-          <view class="room-left">
+        <view class="room-item" v-for="room in rooms" :key="room.id">
+          <view class="room-left" @click="goRoomDetail(room.id)">
             <view class="room-number">{{ room.room_number }}</view>
             <view class="room-meta">
               <text class="room-rent">¥{{ room.rent_amount || room.monthly_rent }}/{{ getRentTypeShort(room.rent_type) }}</text>
@@ -43,12 +47,38 @@
               <text class="tenant-arrow">›</text>
             </view>
           </view>
-          <text class="room-arrow">›</text>
+          <view class="room-actions">
+            <text class="action-btn" @click.stop="editRoom(room)">编辑</text>
+            <text class="action-btn delete" @click.stop="deleteRoom(room)">删除</text>
+          </view>
         </view>
         <view class="empty" v-if="rooms.length === 0">
           <text class="empty-icon">🚪</text>
           <text>暂无房间</text>
         </view>
+      </view>
+    </view>
+
+    <!-- 编辑房源弹窗 -->
+    <view class="modal" v-if="showEditProperty">
+      <view class="modal-content">
+        <view class="popup-title">编辑房源</view>
+        <view class="form-item">
+          <text class="form-label">房源名称</text>
+          <input class="form-input" v-model="propertyForm.name" placeholder="请输入" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">地址</text>
+          <input class="form-input" v-model="propertyForm.address" placeholder="请输入" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">类型</text>
+          <picker :range="typeOptions" range-key="label" @change="onPropertyTypeChange">
+            <view class="form-picker">{{ typeOptions[propertyForm.property_type - 1]?.label }} ›</view>
+          </picker>
+        </view>
+        <button class="btn-primary" @click="submitProperty" :disabled="submitting">{{ submitting ? '提交中...' : '确定' }}</button>
+        <button class="btn-default" @click="showEditProperty = false">取消</button>
       </view>
     </view>
 
@@ -90,9 +120,11 @@ const property = ref({})
 const rooms = ref([])
 const submitting = ref(false)
 const showRoom = ref(false)
+const showEditProperty = ref(false)
 const editingRoom = ref(null)
 
 const roomForm = reactive({ room_number: '', floor: '', rent_type: 1, rent_amount: '' })
+const propertyForm = reactive({ name: '', address: '', property_type: 1 })
 const typeOptions = [{ label: '整栋', value: 1 }, { label: '单套', value: 2 }, { label: '商铺', value: 3 }]
 const rentTypes = [{ label: '月租金', value: 1 }, { label: '季租金', value: 2 }, { label: '年租金', value: 3 }]
 
@@ -121,6 +153,52 @@ const loadRooms = async () => {
   } catch (error) { console.error(error) }
 }
 
+const editProperty = () => {
+  propertyForm.name = property.value.name || ''
+  propertyForm.address = property.value.address || ''
+  propertyForm.property_type = property.value.property_type || 1
+  showEditProperty.value = true
+}
+
+const onPropertyTypeChange = (e) => {
+  propertyForm.property_type = typeOptions[e.detail.value].value
+}
+
+const submitProperty = async () => {
+  if (!propertyForm.name) { uni.showToast({ title: '请输入房源名称', icon: 'none' }); return }
+  submitting.value = true
+  try {
+    await propertyApi.update(propertyId.value, {
+      name: propertyForm.name,
+      address: propertyForm.address,
+      property_type: propertyForm.property_type
+    })
+    uni.showToast({ title: '修改成功', icon: 'success' })
+    showEditProperty.value = false
+    await loadProperty()
+  } catch (error) { console.error(error) } finally { submitting.value = false }
+}
+
+const deleteProperty = () => {
+  if (rooms.value.length > 0) {
+    uni.showToast({ title: '请先删除所有房间', icon: 'none' })
+    return
+  }
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除此房源吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await propertyApi.delete(propertyId.value)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => uni.navigateBack(), 1500)
+        } catch (error) { uni.showToast({ title: error.message || '删除失败', icon: 'none' }) }
+      }
+    }
+  })
+}
+
 const addRoom = () => {
   editingRoom.value = null
   roomForm.room_number = ''
@@ -137,6 +215,23 @@ const editRoom = (room) => {
   roomForm.rent_type = room.rent_type || 1
   roomForm.rent_amount = String(room.rent_amount || room.monthly_rent || '')
   showRoom.value = true
+}
+
+const deleteRoom = (room) => {
+  uni.showModal({
+    title: '确认删除',
+    content: `确定要删除房间 ${room.room_number} 吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await roomApi.delete(room.id)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          await loadRooms()
+          await loadProperty()
+        } catch (error) { uni.showToast({ title: error.message || '删除失败', icon: 'none' }) }
+      }
+    }
+  })
 }
 
 const onRentTypeChange = (e) => {
@@ -224,6 +319,16 @@ const submitRoom = async () => {
 .info-label { width: 140rpx; color: #999; }
 .info-value { flex: 1; color: #333; }
 
+.card-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.btn-edit { flex: 1; background: #007AFF; color: #fff; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
+.btn-delete { flex: 1; background: #FF3B30; color: #fff; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
+
 .section {
   background: #fff;
   border-radius: 16rpx;
@@ -280,6 +385,10 @@ const submitRoom = async () => {
 .tenant-arrow { color: #007AFF; font-size: 28rpx; margin-left: 8rpx; }
 
 .room-arrow { font-size: 32rpx; color: #ccc; }
+
+.room-actions { display: flex; gap: 20rpx; }
+.action-btn { font-size: 24rpx; color: #007AFF; padding: 8rpx 16rpx; background: #E3F2FD; border-radius: 6rpx; }
+.action-btn.delete { color: #FF3B30; background: #FFEBEE; }
 
 .modal {
   position: fixed;

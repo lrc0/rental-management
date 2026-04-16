@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"rental-management/internal/middleware"
 	"rental-management/internal/pkg/errors"
@@ -146,4 +148,29 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	}
 
 	response.Success(c, nil)
+}
+
+// GetStatistics 获取首页统计
+// @Summary 获取首页统计
+// @Description 获取房源数、房间数、租客数、本月收入等统计数据
+// @Tags 统计
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} response.Response
+// @Router /statistics [get]
+func (h *AuthHandler) GetStatistics(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+
+	// 获取本月起止时间
+	now := time.Now()
+	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local)
+	endDate := startDate.AddDate(0, 1, -1)
+
+	stats, err := h.authService.GetStatistics(userID, startDate, endDate)
+	if err != nil {
+		response.Fail(c, errors.CodeInternalError)
+		return
+	}
+
+	response.Success(c, stats)
 }

@@ -110,3 +110,8 @@ func (r *ContractRepository) CheckRoomAvailable(roomID uint, startDate time.Time
 		Count(&count).Error
 	return count == 0, err
 }
+
+// Delete 删除合同
+func (r *ContractRepository) Delete(id uint) error {
+	return r.db.Delete(&model.Contract{}, id).Error
+}

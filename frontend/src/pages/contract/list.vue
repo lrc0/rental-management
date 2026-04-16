@@ -1,7 +1,7 @@
 <template>
   <view class="page-container">
     <view class="contract-list">
-      <view class="contract-card" v-for="contract in list" :key="contract.id">
+      <view class="contract-card" v-for="contract in list" :key="contract.id" @click="showDetail(contract)">
         <view class="contract-header">
           <view class="contract-room">{{ contract.room?.room_number || '-' }}</view>
           <view class="contract-status" :class="getStatusClass(contract.status)">{{ getStatusText(contract.status) }}</view>
@@ -20,7 +20,7 @@
           </view>
         </view>
         <view class="contract-actions" v-if="contract.status === 1">
-          <button class="btn-terminate" @click="terminateContract(contract)">解约</button>
+          <button class="btn-terminate" @click.stop="terminateContract(contract)">解约</button>
         </view>
       </view>
       <view class="empty" v-if="list.length === 0 && !loading">
@@ -34,14 +34,14 @@
     <!-- 签订合同弹窗 -->
     <view class="modal" v-if="showAdd">
       <view class="modal-content">
-        <view class="popup-title">签订合同</view>
-        <view class="form-item">
+        <view class="popup-title">{{ editingContract ? '编辑合同' : '签订合同' }}</view>
+        <view class="form-item" v-if="!editingContract">
           <text class="form-label">选择房间</text>
           <picker :range="availableRooms" range-key="room_number" @change="onRoomChange">
             <view class="form-picker">{{ selectedRoom?.room_number || '请选择' }} ›</view>
           </picker>
         </view>
-        <view class="form-item">
+        <view class="form-item" v-if="!editingContract">
           <text class="form-label">选择租客</text>
           <picker :range="tenantList" range-key="name" @change="onTenantChange">
             <view class="form-picker">{{ selectedTenant?.name || '请选择' }} ›</view>
@@ -67,6 +67,24 @@
         <button class="btn-default" @click="showAdd = false">取消</button>
       </view>
     </view>
+
+    <!-- 详情弹窗 -->
+    <view class="modal" v-if="showDetailModal">
+      <view class="modal-content">
+        <view class="popup-title">合同详情</view>
+        <view class="detail-info" v-if="currentContract">
+          <view class="detail-item"><text class="detail-label">房间</text><text class="detail-value">{{ currentContract.room?.room_number || '-' }}</text></view>
+          <view class="detail-item"><text class="detail-label">租客</text><text class="detail-value">{{ currentContract.tenant?.name || '-' }}</text></view>
+          <view class="detail-item"><text class="detail-label">租期</text><text class="detail-value">{{ formatDate(currentContract.start_date) }} ~ {{ formatDate(currentContract.end_date) }}</text></view>
+          <view class="detail-item"><text class="detail-label">月租金</text><text class="detail-value price">¥{{ currentContract.monthly_rent }}</text></view>
+          <view class="detail-item"><text class="detail-label">押金</text><text class="detail-value">¥{{ currentContract.deposit || 0 }}</text></view>
+          <view class="detail-item"><text class="detail-label">状态</text><text class="detail-value" :class="getStatusClass(currentContract.status)">{{ getStatusText(currentContract.status) }}</text></view>
+        </view>
+        <button class="btn-primary" @click="editCurrentContract" v-if="currentContract?.status === 1">编辑</button>
+        <button class="btn-danger" @click="deleteCurrentContract" v-if="currentContract?.status !== 1">删除</button>
+        <button class="btn-default" @click="showDetailModal = false">关闭</button>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -79,6 +97,9 @@ const loading = ref(false)
 const submitting = ref(false)
 const list = ref([])
 const showAdd = ref(false)
+const showDetailModal = ref(false)
+const editingContract = ref(null)
+const currentContract = ref(null)
 const availableRooms = ref([])
 const tenantList = ref([])
 const selectedRoom = ref(null)
@@ -118,6 +139,7 @@ const loadTenants = async () => {
 }
 
 const addContract = () => {
+  editingContract.value = null
   selectedRoom.value = null
   selectedTenant.value = null
   formData.start_date = ''
@@ -134,25 +156,66 @@ const onRoomChange = (e) => {
 const onTenantChange = (e) => { selectedTenant.value = tenantList.value[e.detail.value] }
 
 const submitForm = async () => {
-  if (!selectedRoom.value) { uni.showToast({ title: '请选择房间', icon: 'none' }); return }
-  if (!selectedTenant.value) { uni.showToast({ title: '请选择租客', icon: 'none' }); return }
+  if (!editingContract.value) {
+    if (!selectedRoom.value) { uni.showToast({ title: '请选择房间', icon: 'none' }); return }
+    if (!selectedTenant.value) { uni.showToast({ title: '请选择租客', icon: 'none' }); return }
+  }
   if (!formData.start_date || !formData.end_date) { uni.showToast({ title: '请选择租期', icon: 'none' }); return }
   submitting.value = true
   try {
-    await contractApi.create({
-      room_id: selectedRoom.value.id,
-      tenant_id: selectedTenant.value.id,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      monthly_rent: parseFloat(formData.monthly_rent) || 0,
-      deposit: 0,
-      payment_day: 1
-    })
-    uni.showToast({ title: '签订成功', icon: 'success' })
+    if (editingContract.value) {
+      await contractApi.update(editingContract.value.id, {
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        monthly_rent: parseFloat(formData.monthly_rent) || 0
+      })
+    } else {
+      await contractApi.create({
+        room_id: selectedRoom.value.id,
+        tenant_id: selectedTenant.value.id,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        monthly_rent: parseFloat(formData.monthly_rent) || 0,
+        deposit: 0,
+        payment_day: 1
+      })
+    }
+    uni.showToast({ title: editingContract.value ? '修改成功' : '签订成功', icon: 'success' })
     showAdd.value = false
     loadList()
     loadAvailableRooms()
   } catch (error) { console.error(error) } finally { submitting.value = false }
+}
+
+const showDetail = (contract) => {
+  currentContract.value = contract
+  showDetailModal.value = true
+}
+
+const editCurrentContract = () => {
+  showDetailModal.value = false
+  editingContract.value = currentContract.value
+  formData.start_date = currentContract.value.start_date?.substring(0, 10) || ''
+  formData.end_date = currentContract.value.end_date?.substring(0, 10) || ''
+  formData.monthly_rent = String(currentContract.value.monthly_rent || '')
+  showAdd.value = true
+}
+
+const deleteCurrentContract = async () => {
+  uni.showModal({
+    title: '确认删除',
+    content: `确定删除该合同吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await contractApi.delete(currentContract.value.id)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          showDetailModal.value = false
+          loadList()
+        } catch (error) { uni.showToast({ title: error.message || '删除失败', icon: 'none' }) }
+      }
+    }
+  })
 }
 
 const terminateContract = (contract) => {
@@ -247,6 +310,8 @@ onPullDownRefresh(() => loadList())
   background: #fff;
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .popup-title { font-size: 36rpx; font-weight: 600; text-align: center; margin-bottom: 32rpx; }
@@ -256,6 +321,29 @@ onPullDownRefresh(() => loadList())
 .form-picker { flex: 1; text-align: right; color: #333; }
 .modal-content .btn-primary { margin-top: 32rpx; }
 .modal-content .btn-default { margin-top: 16rpx; }
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.detail-label { color: #999; }
+.detail-value { color: #333; }
+.detail-value.price { color: #FF6B6B; font-weight: 600; }
+.detail-value.success { color: #4CAF50; }
+.detail-value.default { color: #999; }
+.detail-value.warning { color: #FF9800; }
+
+.btn-danger {
+  background: #FFEBEE;
+  color: #F44336;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  text-align: center;
+  font-size: 30rpx;
+  margin-top: 16rpx;
+}
 
 .empty { padding: 100rpx; text-align: center; color: #999; }
 .empty-icon { display: block; font-size: 100rpx; margin-bottom: 16rpx; }

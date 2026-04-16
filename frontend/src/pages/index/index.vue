@@ -117,7 +117,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '../../stores/user'
-import { propertyApi, roomApi, tenantApi, billApi, meterApi } from '../../utils/request'
+import { authApi, billApi, meterApi, roomApi } from '../../utils/request'
 
 const userStore = useUserStore()
 
@@ -141,16 +141,11 @@ onMounted(async () => {
 
 const loadStats = async () => {
   try {
-    const [properties, rooms, tenants, statistics] = await Promise.all([
-      propertyApi.getList({ page: 1, page_size: 1 }),
-      roomApi.getList({ page: 1, page_size: 1 }),
-      tenantApi.getList({ page: 1, page_size: 1 }),
-      billApi.getStatistics({}).catch(() => null)
-    ])
-    stats.propertyCount = properties.total || 0
-    stats.roomCount = rooms.total || 0
-    stats.tenantCount = tenants.total || 0
-    stats.monthlyIncome = statistics?.paid_amount?.toFixed(2) || '0.00'
+    const res = await authApi.getStatistics()
+    stats.propertyCount = res.property_count || 0
+    stats.roomCount = res.room_count || 0
+    stats.tenantCount = res.tenant_count || 0
+    stats.monthlyIncome = (res.monthly_income || 0).toFixed(2)
   } catch (error) {
     console.error('加载统计数据失败', error)
   }

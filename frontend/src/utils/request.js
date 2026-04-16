@@ -145,7 +145,8 @@ export const authApi = {
   register: function(data) { return api.post('/auth/register', data) },
   getProfile: function() { return api.get('/auth/profile') },
   updateProfile: function(data) { return api.put('/auth/profile', data) },
-  changePassword: function(data) { return api.put('/auth/password', data) }
+  changePassword: function(data) { return api.put('/auth/password', data) },
+  getStatistics: function() { return api.get('/statistics') }
 }
 
 export const propertyApi = {
@@ -177,18 +178,23 @@ export const contractApi = {
   getList: function(params) { return api.get('/contracts', params) },
   getDetail: function(id) { return api.get('/contracts/' + id) },
   create: function(data) { return api.post('/contracts', data) },
-  terminate: function(id, reason) { return api.put('/contracts/' + id + '/terminate', { reason: reason }) }
+  update: function(id, data) { return api.put('/contracts/' + id, data) },
+  terminate: function(id, reason) { return api.put('/contracts/' + id + '/terminate', { reason: reason }) },
+  delete: function(id) { return api.delete('/contracts/' + id) }
 }
 
 export const meterApi = {
   getList: function(params) { return api.get('/meter-readings', params) },
-  create: function(data) { return api.post('/meter-readings', data) }
+  create: function(data) { return api.post('/meter-readings', data) },
+  delete: function(id) { return api.delete('/meter-readings/' + id) }
 }
 
 export const billApi = {
   getList: function(params) { return api.get('/bills', params) },
   getDetail: function(id) { return api.get('/bills/' + id) },
   create: function(data) { return api.post('/bills', data) },
+  update: function(id, data) { return api.put('/bills/' + id, data) },
+  delete: function(id) { return api.delete('/bills/' + id) },
   pay: function(id, data) { return api.put('/bills/' + id + '/pay', data) },
   getStatistics: function(params) { return api.get('/bills/statistics', params) },
   getMonthlyStatistics: function(params) { return api.get('/bills/monthly-statistics', params) }

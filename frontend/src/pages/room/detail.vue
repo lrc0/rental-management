@@ -132,6 +132,10 @@
           <text class="form-label">电费</text>
           <input class="form-input" type="digit" v-model="billForm.electricity_fee" placeholder="0.00" />
         </view>
+        <view class="form-item">
+          <text class="form-label">气费</text>
+          <input class="form-input" type="digit" v-model="billForm.gas_fee" placeholder="0.00" />
+        </view>
         <button class="btn-primary" @click="submitBill" :disabled="submitting">{{ submitting ? '创建中...' : '创建' }}</button>
         <button class="btn-default" @click="showBill = false">取消</button>
       </view>
@@ -174,7 +178,7 @@ const payingBill = ref(null)
 const payAmount = ref('')
 
 const meterForm = reactive({ water: '', electricity: '', gas: '' })
-const billForm = reactive({ bill_month: '', rent_fee: '', water_fee: '', electricity_fee: '' })
+const billForm = reactive({ bill_month: '', rent_fee: '', water_fee: '', electricity_fee: '', gas_fee: '' })
 
 const getStatusText = (status) => ({ 1: '空置', 2: '已租', 3: '维修中' }[status] || '未知')
 const getStatusClass = (status) => ({ 1: 'info', 2: 'success', 3: 'warning' }[status] || '')

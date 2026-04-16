@@ -283,3 +283,62 @@ func (h *TenantHandler) TerminateContract(c *gin.Context) {
 
 	response.Success(c, nil)
 }
+
+// UpdateContract 更新合同
+// @Summary 更新合同
+// @Description 更新合同信息
+// @Tags 合同管理
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "合同ID"
+// @Param request body service.UpdateContractRequest true "合同信息"
+// @Success 200 {object} response.Response
+// @Router /contracts/{id} [put]
+func (h *TenantHandler) UpdateContract(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, "无效的ID")
+		return
+	}
+
+	var req service.UpdateContractRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, "参数错误: "+err.Error())
+		return
+	}
+
+	contract, err := h.tenantService.UpdateContract(uint(id), userID, &req)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, contract)
+}
+
+// DeleteContract 删除合同
+// @Summary 删除合同
+// @Description 删除合同
+// @Tags 合同管理
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "合同ID"
+// @Success 200 {object} response.Response
+// @Router /contracts/{id} [delete]
+func (h *TenantHandler) DeleteContract(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, "无效的ID")
+		return
+	}
+
+	if err := h.tenantService.DeleteContract(uint(id), userID); err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, nil)
+}

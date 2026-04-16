@@ -156,6 +156,15 @@ type TerminateContractRequest struct {
 	Reason string `json:"reason"`
 }
 
+// UpdateContractRequest 更新合同请求
+type UpdateContractRequest struct {
+	StartDate   string  `json:"start_date"`
+	EndDate     string  `json:"end_date"`
+	MonthlyRent float64 `json:"monthly_rent"`
+	Deposit     float64 `json:"deposit"`
+	PaymentDay  int8    `json:"payment_day"`
+}
+
 // CreateContract 签订合同
 func (s *TenantService) CreateContract(userID uint, req *CreateContractRequest) (*model.Contract, error) {
 	// 解析日期
@@ -259,4 +268,62 @@ func (s *TenantService) TerminateContract(id, userID uint, req *TerminateContrac
 	}
 
 	return nil
+}
+
+// UpdateContract 更新合同
+func (s *TenantService) UpdateContract(id, userID uint, req *UpdateContractRequest) (*model.Contract, error) {
+	contract, err := s.contractRepo.FindByIDAndUserID(id, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 解析日期
+	if req.StartDate != "" {
+		startDate, err := time.Parse("2006-01-02", req.StartDate)
+		if err != nil {
+			return nil, errors.New("开始日期格式错误")
+		}
+		contract.StartDate = startDate
+	}
+	if req.EndDate != "" {
+		endDate, err := time.Parse("2006-01-02", req.EndDate)
+		if err != nil {
+			return nil, errors.New("结束日期格式错误")
+		}
+		if endDate.Before(contract.StartDate) {
+			return nil, errors.New("结束日期不能早于开始日期")
+		}
+		contract.EndDate = endDate
+	}
+
+	if req.MonthlyRent > 0 {
+		contract.MonthlyRent = req.MonthlyRent
+	}
+	if req.Deposit > 0 {
+		contract.Deposit = req.Deposit
+	}
+	if req.PaymentDay > 0 {
+		contract.PaymentDay = req.PaymentDay
+	}
+
+	if err := s.contractRepo.Update(contract); err != nil {
+		return nil, err
+	}
+
+	return contract, nil
+}
+
+// DeleteContract 删除合同
+func (s *TenantService) DeleteContract(id, userID uint) error {
+	contract, err := s.contractRepo.FindByIDAndUserID(id, userID)
+	if err != nil {
+		return err
+	}
+
+	// 只有已解约或已到期的合同才能删除
+	if contract.Status == model.ContractStatusActive {
+		return errors.New("生效中的合同不能删除，请先解约")
+	}
+
+	return s.contractRepo.Delete(id)
 }

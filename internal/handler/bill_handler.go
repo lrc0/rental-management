@@ -323,3 +323,53 @@ func (h *BillHandler) UpdateFeeRate(c *gin.Context) {
 
 	response.Success(c, feeRate)
 }
+
+// DeleteBill 删除账单
+// @Summary 删除账单
+// @Description 删除账单
+// @Tags 账单管理
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "账单ID"
+// @Success 200 {object} response.Response
+// @Router /bills/{id} [delete]
+func (h *BillHandler) DeleteBill(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, "无效的ID")
+		return
+	}
+
+	if err := h.billService.DeleteBill(uint(id), userID); err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, nil)
+}
+
+// DeleteMeterReading 删除抄表记录
+// @Summary 删除抄表记录
+// @Description 删除抄表记录
+// @Tags 抄表管理
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "抄表记录ID"
+// @Success 200 {object} response.Response
+// @Router /meter-readings/{id} [delete]
+func (h *BillHandler) DeleteMeterReading(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, "无效的ID")
+		return
+	}
+
+	if err := h.billService.DeleteMeterReading(uint(id), userID); err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, nil)
+}

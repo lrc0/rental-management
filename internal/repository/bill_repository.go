@@ -200,3 +200,23 @@ func (r *BillRepository) CheckBillExists(roomID uint, billMonth string) (bool, e
 	err := r.db.Model(&model.Bill{}).Where("room_id = ? AND bill_month = ?", roomID, billMonth).Count(&count).Error
 	return count > 0, err
 }
+
+// DeleteBill 删除账单
+func (r *BillRepository) DeleteBill(id uint) error {
+	return r.db.Delete(&model.Bill{}, id).Error
+}
+
+// GetMeterReadingByID 根据ID获取抄表记录
+func (r *BillRepository) GetMeterReadingByID(id uint) (*model.MeterReading, error) {
+	var reading model.MeterReading
+	err := r.db.First(&reading, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &reading, nil
+}
+
+// DeleteMeterReading 删除抄表记录
+func (r *BillRepository) DeleteMeterReading(id uint) error {
+	return r.db.Delete(&model.MeterReading{}, id).Error
+}

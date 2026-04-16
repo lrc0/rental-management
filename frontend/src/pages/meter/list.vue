@@ -29,6 +29,9 @@
             </view>
           </view>
         </view>
+        <view class="meter-actions">
+          <button class="btn-delete" @click="deleteMeter(item)">删除</button>
+        </view>
       </view>
       <view class="empty" v-if="list.length === 0 && !loading">
         <text class="empty-icon">⚡</text>
@@ -130,6 +133,22 @@ const submitForm = async () => {
   } catch (error) { console.error(error) } finally { submitting.value = false }
 }
 
+const deleteMeter = (item) => {
+  uni.showModal({
+    title: '确认删除',
+    content: `确定要删除此抄表记录吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await meterApi.delete(item.id)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          loadList()
+        } catch (error) { uni.showToast({ title: error.message || '删除失败', icon: 'none' }) }
+      }
+    }
+  })
+}
+
 onPullDownRefresh(() => loadList())
 </script>
 
@@ -166,6 +185,9 @@ onPullDownRefresh(() => loadList())
 .data-info { text-align: center; }
 .data-label { display: block; font-size: 24rpx; color: #999; margin-bottom: 8rpx; }
 .data-reading { font-size: 32rpx; font-weight: 600; color: #333; }
+
+.meter-actions { margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #f0f0f0; }
+.btn-delete { width: 100%; background: #f5f5f5; color: #FF3B30; border-radius: 8rpx; padding: 16rpx; font-size: 26rpx; }
 
 .add-btn {
   position: fixed;

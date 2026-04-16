@@ -398,3 +398,35 @@ func (s *BillService) UpdateFeeRate(userID uint, req *UpdateFeeRateRequest) (*mo
 
 	return feeRate, nil
 }
+
+// DeleteBill 删除账单
+func (s *BillService) DeleteBill(id, userID uint) error {
+	bill, err := s.billRepo.FindBillByIDAndUserID(id, userID)
+	if err != nil {
+		return errors.New("账单不存在")
+	}
+
+	// 已支付的账单不能删除
+	if bill.Status == model.BillStatusPaid {
+		return errors.New("已支付的账单不能删除")
+	}
+
+	return s.billRepo.DeleteBill(id)
+}
+
+// DeleteMeterReading 删除抄表记录
+func (s *BillService) DeleteMeterReading(id, userID uint) error {
+	// 验证抄表记录归属
+	reading, err := s.billRepo.GetMeterReadingByID(id)
+	if err != nil {
+		return errors.New("抄表记录不存在")
+	}
+
+	// 验证房间归属
+	_, err = s.roomRepo.FindByIDAndUserID(reading.RoomID, userID)
+	if err != nil {
+		return errors.New("无权限删除此记录")
+	}
+
+	return s.billRepo.DeleteMeterReading(id)
+}

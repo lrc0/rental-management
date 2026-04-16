@@ -21,13 +21,20 @@
         <view class="bill-body">
           <view class="bill-tenant" v-if="bill.tenant">租客：{{ bill.tenant.name }}</view>
           <view class="bill-month">{{ bill.bill_month }}</view>
+          <view class="bill-fees">
+            <text v-if="bill.rent_fee">租金: ¥{{ bill.rent_fee }}</text>
+            <text v-if="bill.water_fee">水费: ¥{{ bill.water_fee }}</text>
+            <text v-if="bill.electricity_fee">电费: ¥{{ bill.electricity_fee }}</text>
+            <text v-if="bill.gas_fee">气费: ¥{{ bill.gas_fee }}</text>
+          </view>
           <view class="bill-total">
             <text>合计</text>
             <text class="total-amount">¥{{ bill.amount }}</text>
           </view>
         </view>
-        <view class="bill-actions" v-if="bill.status === 1">
-          <button class="btn-pay" @click="payBill(bill)">收款</button>
+        <view class="bill-actions">
+          <button class="btn-pay" v-if="bill.status === 1" @click="payBill(bill)">收款</button>
+          <button class="btn-delete" @click="deleteBill(bill)">删除</button>
         </view>
       </view>
       <view class="empty" v-if="list.length === 0 && !loading">
@@ -65,6 +72,10 @@
         <view class="form-item">
           <text class="form-label">电费</text>
           <input class="form-input" type="digit" v-model="formData.electricity_fee" placeholder="0.00" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">气费</text>
+          <input class="form-input" type="digit" v-model="formData.gas_fee" placeholder="0.00" />
         </view>
         <button class="btn-primary" @click="submitForm" :disabled="submitting">{{ submitting ? '创建中...' : '创建' }}</button>
         <button class="btn-default" @click="showAdd = false">取消</button>
@@ -106,7 +117,7 @@ const selectedRoom = ref(null)
 const payingBill = ref(null)
 
 const stats = reactive({ pending: '0.00', paid: '0.00' })
-const formData = reactive({ bill_month: '', rent_fee: '', water_fee: '', electricity_fee: '' })
+const formData = reactive({ bill_month: '', rent_fee: '', water_fee: '', electricity_fee: '', gas_fee: '' })
 const payForm = reactive({ amount: '' })
 
 const getStatusText = (status) => ({ 1: '待支付', 2: '已支付', 3: '已逾期' }[status] || '未知')
@@ -147,12 +158,13 @@ const addBill = () => {
   formData.rent_fee = ''
   formData.water_fee = ''
   formData.electricity_fee = ''
+  formData.gas_fee = ''
   showAdd.value = true
 }
 
 const onRoomChange = (e) => {
   selectedRoom.value = roomList.value[e.detail.value]
-  formData.rent_fee = String(selectedRoom.value?.monthly_rent || '')
+  formData.rent_fee = String(selectedRoom.value?.monthly_rent || selectedRoom.value?.rent_amount || '')
 }
 
 const submitForm = async () => {
@@ -165,13 +177,31 @@ const submitForm = async () => {
       bill_month: formData.bill_month,
       rent_fee: parseFloat(formData.rent_fee) || 0,
       water_fee: parseFloat(formData.water_fee) || 0,
-      electricity_fee: parseFloat(formData.electricity_fee) || 0
+      electricity_fee: parseFloat(formData.electricity_fee) || 0,
+      gas_fee: parseFloat(formData.gas_fee) || 0
     })
     uni.showToast({ title: '创建成功', icon: 'success' })
     showAdd.value = false
     loadList()
     loadStats()
   } catch (error) { console.error(error) } finally { submitting.value = false }
+}
+
+const deleteBill = (bill) => {
+  uni.showModal({
+    title: '确认删除',
+    content: `确定要删除 ${bill.bill_month} 的账单吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await billApi.delete(bill.id)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          loadList()
+          loadStats()
+        } catch (error) { uni.showToast({ title: error.message || '删除失败', icon: 'none' }) }
+      }
+    }
+  })
 }
 
 const payBill = (bill) => {
@@ -242,6 +272,7 @@ onPullDownRefresh(() => { loadList(); loadStats() })
 
 .bill-tenant { font-size: 26rpx; color: #666; margin-bottom: 8rpx; }
 .bill-month { font-size: 24rpx; color: #999; margin-bottom: 16rpx; }
+.bill-fees { font-size: 24rpx; color: #666; margin-bottom: 12rpx; display: flex; flex-wrap: wrap; gap: 16rpx; }
 
 .bill-total {
   display: flex;
@@ -252,8 +283,9 @@ onPullDownRefresh(() => { loadList(); loadStats() })
 
 .total-amount { color: #FF6B6B; font-weight: 700; font-size: 36rpx; }
 
-.bill-actions { margin-top: 20rpx; }
-.btn-pay { width: 100%; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: #fff; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
+.bill-actions { margin-top: 20rpx; display: flex; gap: 20rpx; }
+.btn-pay { flex: 1; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: #fff; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
+.btn-delete { flex: 1; background: #f5f5f5; color: #FF3B30; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
 
 .add-btn {
   position: fixed;

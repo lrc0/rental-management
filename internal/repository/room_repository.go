@@ -157,3 +157,13 @@ func (r *RoomRepository) ListWithTenant(userID uint, propertyID uint, status *in
 	err := r.db.Raw(query, args...).Scan(&results).Error
 	return results, total, err
 }
+
+// CountByUserID 统计用户的房间数
+func (r *RoomRepository) CountByUserID(userID uint) (int64, error) {
+	var count int64
+	err := r.db.Model(&model.Room{}).
+		Joins("JOIN properties ON properties.id = rooms.property_id").
+		Where("properties.user_id = ? AND rooms.deleted_at IS NULL AND properties.deleted_at IS NULL", userID).
+		Count(&count).Error
+	return count, err
+}

@@ -116,3 +116,10 @@ func (r *TenantRepository) FindByIDCard(userID uint, idCard string) (*model.Tena
 	}
 	return &tenant, nil
 }
+
+// CountByUserID 统计用户的租客数
+func (r *TenantRepository) CountByUserID(userID uint) (int64, error) {
+	var count int64
+	err := r.db.Model(&model.Tenant{}).Where("user_id = ? AND deleted_at IS NULL", userID).Count(&count).Error
+	return count, err
+}

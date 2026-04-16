@@ -66,3 +66,10 @@ func (r *PropertyRepository) UpdateRoomCount(propertyID uint, count int) error {
 	return r.db.Model(&model.Property{}).Where("id = ?", propertyID).
 		Update("total_rooms", count).Error
 }
+
+// CountByUserID 统计用户的房源数
+func (r *PropertyRepository) CountByUserID(userID uint) (int64, error) {
+	var count int64
+	err := r.db.Model(&model.Property{}).Where("user_id = ? AND deleted_at IS NULL", userID).Count(&count).Error
+	return count, err
+}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"time"
 
 	"gorm.io/gorm"
 	"rental-management/internal/model"
@@ -10,11 +11,27 @@ import (
 )
 
 type AuthService struct {
-	userRepo *repository.UserRepository
+	userRepo     *repository.UserRepository
+	propertyRepo *repository.PropertyRepository
+	roomRepo     *repository.RoomRepository
+	tenantRepo   *repository.TenantRepository
+	billRepo     *repository.BillRepository
 }
 
-func NewAuthService(userRepo *repository.UserRepository) *AuthService {
-	return &AuthService{userRepo: userRepo}
+func NewAuthService(
+	userRepo *repository.UserRepository,
+	propertyRepo *repository.PropertyRepository,
+	roomRepo *repository.RoomRepository,
+	tenantRepo *repository.TenantRepository,
+	billRepo *repository.BillRepository,
+) *AuthService {
+	return &AuthService{
+		userRepo:     userRepo,
+		propertyRepo: propertyRepo,
+		roomRepo:     roomRepo,
+		tenantRepo:   tenantRepo,
+		billRepo:     billRepo,
+	}
 }
 
 // RegisterRequest 注册请求
@@ -161,4 +178,40 @@ func (s *AuthService) ChangePassword(userID uint, req *ChangePasswordRequest) er
 
 	user.PasswordHash = passwordHash
 	return s.userRepo.Update(user)
+}
+
+// StatisticsResponse 统计响应
+type StatisticsResponse struct {
+	PropertyCount int64   `json:"property_count"`
+	RoomCount     int64   `json:"room_count"`
+	TenantCount   int64   `json:"tenant_count"`
+	MonthlyIncome float64 `json:"monthly_income"`
+}
+
+// GetStatistics 获取统计数据
+func (s *AuthService) GetStatistics(userID uint, startDate, endDate time.Time) (*StatisticsResponse, error) {
+	// 获取房源数
+	propertyCount, _ := s.propertyRepo.CountByUserID(userID)
+
+	// 获取房间数
+	roomCount, _ := s.roomRepo.CountByUserID(userID)
+
+	// 获取租客数
+	tenantCount, _ := s.tenantRepo.CountByUserID(userID)
+
+	// 获取本月收入
+	stats, _ := s.billRepo.GetBillStatistics(userID, startDate, endDate)
+	var monthlyIncome float64
+	if stats != nil {
+		if v, ok := stats["paid_amount"].(float64); ok {
+			monthlyIncome = v
+		}
+	}
+
+	return &StatisticsResponse{
+		PropertyCount: propertyCount,
+		RoomCount:     roomCount,
+		TenantCount:   tenantCount,
+		MonthlyIncome: monthlyIncome,
+	}, nil
 }
