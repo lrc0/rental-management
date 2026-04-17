@@ -142,10 +142,12 @@ onMounted(async () => {
 const loadStats = async () => {
   try {
     const res = await authApi.getStatistics()
-    stats.propertyCount = res.property_count || 0
-    stats.roomCount = res.room_count || 0
-    stats.tenantCount = res.tenant_count || 0
-    stats.monthlyIncome = (res.monthly_income || 0).toFixed(2)
+    if (res) {
+      stats.propertyCount = res.property_count || 0
+      stats.roomCount = res.room_count || 0
+      stats.tenantCount = res.tenant_count || 0
+      stats.monthlyIncome = (res.monthly_income || 0).toFixed(2)
+    }
   } catch (error) {
     console.error('加载统计数据失败', error)
   }

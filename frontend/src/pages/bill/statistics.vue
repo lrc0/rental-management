@@ -34,8 +34,9 @@
             <text class="amount total">/ ¥{{ item.total_fee?.toFixed(2) || '0.00' }}</text>
           </view>
         </view>
-        <view class="empty" v-if="monthlyData.length === 0">
-          <text>暂无数据</text>
+        <view class="empty" v-if="monthlyData.length === 0 || monthlyData.every(m => m.bill_count === 0)">
+          <text class="empty-icon">📊</text>
+          <text>暂无统计数据</text>
         </view>
       </view>
     </view>
@@ -47,6 +48,7 @@
           <text class="stat-num">{{ pendingCount }}</text>
           <text class="stat-label">待收款账单</text>
         </view>
+        <text class="stat-arrow">›</text>
       </view>
       <view class="stat-card" @click="goToBills(2)">
         <view class="stat-icon" style="background: #E8F5E9;">✅</view>
@@ -54,6 +56,7 @@
           <text class="stat-num">{{ paidCount }}</text>
           <text class="stat-label">已收款账单</text>
         </view>
+        <text class="stat-arrow">›</text>
       </view>
     </view>
   </view>
@@ -79,15 +82,30 @@ const loadData = async () => {
   try {
     const monthRes = await billApi.getMonthlyStatistics({ year: currentYear.value })
     monthlyData.value = monthRes || []
+  } catch (error) {
+    console.error('加载月度统计失败', error)
+    monthlyData.value = []
+  }
+
+  try {
     const statsRes = await billApi.getStatistics({})
-    pendingCount.value = statsRes.bill_count - statsRes.paid_count || 0
-    paidCount.value = statsRes.paid_count || 0
-  } catch (error) { console.error(error) }
+    if (statsRes) {
+      pendingCount.value = (statsRes.bill_count || 0) - (statsRes.paid_count || 0)
+      paidCount.value = statsRes.paid_count || 0
+    }
+  } catch (error) {
+    console.error('加载账单统计失败', error)
+    pendingCount.value = 0
+    paidCount.value = 0
+  }
 }
 
 const prevYear = () => { currentYear.value-- }
 const nextYear = () => { if (currentYear.value < new Date().getFullYear()) currentYear.value++ }
-const goToBills = (status) => { uni.navigateTo({ url: `/pages/bill/list?status=${status}` }) }
+
+const goToBills = (status) => {
+  uni.switchTab({ url: '/pages/bill/list' })
+}
 </script>
 
 <style scoped>
@@ -95,6 +113,7 @@ const goToBills = (status) => { uni.navigateTo({ url: `/pages/bill/list?status=$
   min-height: 100vh;
   background: #f8f8f8;
   padding: 24rpx;
+  padding-bottom: 40rpx;
 }
 
 .year-selector {
@@ -107,7 +126,17 @@ const goToBills = (status) => { uni.navigateTo({ url: `/pages/bill/list?status=$
   margin-bottom: 24rpx;
 }
 
-.year-btn { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; font-size: 40rpx; color: #007AFF; }
+.year-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #007AFF;
+  background: #f5f5f5;
+  border-radius: 50%;
+}
 .year-text { font-size: 36rpx; font-weight: 600; color: #333; margin: 0 32rpx; }
 
 .summary-card {
@@ -128,11 +157,22 @@ const goToBills = (status) => { uni.navigateTo({ url: `/pages/bill/list?status=$
 .detail-value.success { color: #81C784; }
 .detail-value.warning { color: #FFD54F; }
 
-.detail-card { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 24rpx; }
+.detail-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
 .card-title { font-size: 32rpx; font-weight: 600; color: #333; margin-bottom: 24rpx; }
 
 .month-list { max-height: 500rpx; overflow-y: auto; }
-.month-item { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.month-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
 .month-item:last-child { border-bottom: none; }
 .month-info { display: flex; flex-direction: column; }
 .month-label { font-size: 28rpx; color: #333; font-weight: 500; }
@@ -143,11 +183,29 @@ const goToBills = (status) => { uni.navigateTo({ url: `/pages/bill/list?status=$
 .amount.total { color: #999; }
 
 .quick-stats { display: flex; gap: 24rpx; }
-.stat-card { flex: 1; background: #fff; border-radius: 16rpx; padding: 24rpx; display: flex; align-items: center; }
-.stat-icon { width: 80rpx; height: 80rpx; border-radius: 16rpx; display: flex; align-items: center; justify-content: center; font-size: 40rpx; margin-right: 20rpx; }
-.stat-info { display: flex; flex-direction: column; }
+.stat-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+}
+.stat-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+.stat-info { flex: 1; display: flex; flex-direction: column; }
 .stat-num { font-size: 40rpx; font-weight: 700; color: #333; }
 .stat-label { font-size: 24rpx; color: #999; margin-top: 4rpx; }
+.stat-arrow { font-size: 36rpx; color: #ccc; }
 
 .empty { padding: 60rpx; text-align: center; color: #999; }
+.empty-icon { display: block; font-size: 80rpx; margin-bottom: 16rpx; }
 </style>
