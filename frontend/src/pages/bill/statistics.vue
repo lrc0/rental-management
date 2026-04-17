@@ -24,17 +24,19 @@
     <view class="detail-card">
       <view class="card-title">月度明细</view>
       <view class="month-list">
-        <view class="month-item" v-for="item in monthlyData" :key="item.month" v-if="item.bill_count > 0">
-          <view class="month-info">
-            <text class="month-label">{{ item.month }}</text>
-            <text class="month-count">{{ item.bill_count }}笔账单</text>
+        <template v-for="item in monthlyData" :key="item.month">
+          <view class="month-item" v-if="item && item.bill_count > 0">
+            <view class="month-info">
+              <text class="month-label">{{ item.month }}</text>
+              <text class="month-count">{{ item.bill_count }}笔账单</text>
+            </view>
+            <view class="month-amounts">
+              <text class="amount paid">¥{{ (item.paid_fee || 0).toFixed(2) }}</text>
+              <text class="amount total">/ ¥{{ (item.total_fee || 0).toFixed(2) }}</text>
+            </view>
           </view>
-          <view class="month-amounts">
-            <text class="amount paid">¥{{ item.paid_fee?.toFixed(2) || '0.00' }}</text>
-            <text class="amount total">/ ¥{{ item.total_fee?.toFixed(2) || '0.00' }}</text>
-          </view>
-        </view>
-        <view class="empty" v-if="monthlyData.length === 0 || monthlyData.every(m => m.bill_count === 0)">
+        </template>
+        <view class="empty" v-if="!hasData">
           <text class="empty-icon">📊</text>
           <text>暂无统计数据</text>
         </view>
@@ -42,7 +44,7 @@
     </view>
 
     <view class="quick-stats">
-      <view class="stat-card" @click="goToBills(1)">
+      <view class="stat-card" @click="goToBills">
         <view class="stat-icon" style="background: #FFF3E0;">💰</view>
         <view class="stat-info">
           <text class="stat-num">{{ pendingCount }}</text>
@@ -50,7 +52,7 @@
         </view>
         <text class="stat-arrow">›</text>
       </view>
-      <view class="stat-card" @click="goToBills(2)">
+      <view class="stat-card" @click="goToBills">
         <view class="stat-icon" style="background: #E8F5E9;">✅</view>
         <view class="stat-info">
           <text class="stat-num">{{ paidCount }}</text>
@@ -71,14 +73,30 @@ const monthlyData = ref([])
 const pendingCount = ref(0)
 const paidCount = ref(0)
 
-const yearlyTotal = computed(() => monthlyData.value.reduce((sum, item) => sum + (item.total_fee || 0), 0).toFixed(2))
-const yearlyPaid = computed(() => monthlyData.value.reduce((sum, item) => sum + (item.paid_fee || 0), 0).toFixed(2))
-const yearlyPending = computed(() => (parseFloat(yearlyTotal.value) - parseFloat(yearlyPaid.value)).toFixed(2))
+const yearlyTotal = computed(() => {
+  const data = monthlyData.value || []
+  return data.reduce((sum, item) => sum + (item?.total_fee || 0), 0).toFixed(2)
+})
+
+const yearlyPaid = computed(() => {
+  const data = monthlyData.value || []
+  return data.reduce((sum, item) => sum + (item?.paid_fee || 0), 0).toFixed(2)
+})
+
+const yearlyPending = computed(() => {
+  return (parseFloat(yearlyTotal.value) - parseFloat(yearlyPaid.value)).toFixed(2)
+})
+
+const hasData = computed(() => {
+  const data = monthlyData.value || []
+  return data.some(item => item && item.bill_count > 0)
+})
 
 onMounted(() => loadData())
 watch(currentYear, () => loadData())
 
 const loadData = async () => {
+  // 加载月度统计
   try {
     const monthRes = await billApi.getMonthlyStatistics({ year: currentYear.value })
     monthlyData.value = monthRes || []
@@ -87,11 +105,15 @@ const loadData = async () => {
     monthlyData.value = []
   }
 
+  // 加载账单统计
   try {
     const statsRes = await billApi.getStatistics({})
-    if (statsRes) {
+    if (statsRes && typeof statsRes === 'object') {
       pendingCount.value = (statsRes.bill_count || 0) - (statsRes.paid_count || 0)
       paidCount.value = statsRes.paid_count || 0
+    } else {
+      pendingCount.value = 0
+      paidCount.value = 0
     }
   } catch (error) {
     console.error('加载账单统计失败', error)
@@ -103,7 +125,7 @@ const loadData = async () => {
 const prevYear = () => { currentYear.value-- }
 const nextYear = () => { if (currentYear.value < new Date().getFullYear()) currentYear.value++ }
 
-const goToBills = (status) => {
+const goToBills = () => {
   uni.switchTab({ url: '/pages/bill/list' })
 }
 </script>
