@@ -116,26 +116,45 @@
         <view class="popup-title">创建账单</view>
         <view class="form-item">
           <text class="form-label">账单月份</text>
-          <picker mode="date" fields="month" :value="billForm.bill_month" @change="(e) => billForm.bill_month = e.detail.value">
+          <picker mode="date" fields="month" :value="billForm.bill_month" @change="onBillMonthChange">
             <view class="form-picker">{{ billForm.bill_month || '请选择' }} ›</view>
           </picker>
         </view>
-        <view class="form-item">
-          <text class="form-label">租金</text>
-          <input class="form-input" type="digit" v-model="billForm.rent_fee" placeholder="0.00" />
+
+        <!-- 费用明细 -->
+        <view class="fee-section" v-if="billForm.bill_month">
+          <view class="fee-title">费用明细</view>
+          <view class="fee-item">
+            <text class="fee-label">租金</text>
+            <input class="fee-input" type="digit" v-model="billForm.rent_fee" placeholder="0.00" />
+          </view>
+          <view class="fee-item">
+            <view class="fee-label-row">
+              <text class="fee-label">水费</text>
+              <text class="fee-usage" v-if="previewData?.water_usage > 0">{{ previewData.water_usage }}吨 × {{ previewData.water_rate }}元</text>
+            </view>
+            <input class="fee-input" type="digit" v-model="billForm.water_fee" placeholder="0.00" />
+          </view>
+          <view class="fee-item">
+            <view class="fee-label-row">
+              <text class="fee-label">电费</text>
+              <text class="fee-usage" v-if="previewData?.electricity_usage > 0">{{ previewData.electricity_usage }}度 × {{ previewData.electricity_rate }}元</text>
+            </view>
+            <input class="fee-input" type="digit" v-model="billForm.electricity_fee" placeholder="0.00" />
+          </view>
+          <view class="fee-item">
+            <view class="fee-label-row">
+              <text class="fee-label">气费</text>
+              <text class="fee-usage" v-if="previewData?.gas_usage > 0">{{ previewData.gas_usage }}立方 × {{ previewData.gas_rate }}元</text>
+            </view>
+            <input class="fee-input" type="digit" v-model="billForm.gas_fee" placeholder="0.00" />
+          </view>
+          <view class="fee-total">
+            <text class="fee-label">合计</text>
+            <text class="fee-amount">¥{{ totalBillAmount }}</text>
+          </view>
         </view>
-        <view class="form-item">
-          <text class="form-label">水费</text>
-          <input class="form-input" type="digit" v-model="billForm.water_fee" placeholder="0.00" />
-        </view>
-        <view class="form-item">
-          <text class="form-label">电费</text>
-          <input class="form-input" type="digit" v-model="billForm.electricity_fee" placeholder="0.00" />
-        </view>
-        <view class="form-item">
-          <text class="form-label">气费</text>
-          <input class="form-input" type="digit" v-model="billForm.gas_fee" placeholder="0.00" />
-        </view>
+
         <button class="btn-primary" @click="submitBill" :disabled="submitting">{{ submitting ? '创建中...' : '创建' }}</button>
         <button class="btn-default" @click="showBill = false">取消</button>
       </view>
@@ -161,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { roomApi, meterApi, billApi } from '../../utils/request'
 
 const roomId = ref(0)
@@ -169,6 +188,7 @@ const room = ref({})
 const tenant = ref({})
 const meters = ref([])
 const bills = ref([])
+const previewData = ref(null)
 
 const showMeter = ref(false)
 const showBill = ref(false)
@@ -179,6 +199,14 @@ const payAmount = ref('')
 
 const meterForm = reactive({ water: '', electricity: '', gas: '' })
 const billForm = reactive({ bill_month: '', rent_fee: '', water_fee: '', electricity_fee: '', gas_fee: '' })
+
+const totalBillAmount = computed(() => {
+  const rent = parseFloat(billForm.rent_fee) || 0
+  const water = parseFloat(billForm.water_fee) || 0
+  const electricity = parseFloat(billForm.electricity_fee) || 0
+  const gas = parseFloat(billForm.gas_fee) || 0
+  return (rent + water + electricity + gas).toFixed(2)
+})
 
 const getStatusText = (status) => ({ 1: '空置', 2: '已租', 3: '维修中' }[status] || '未知')
 const getStatusClass = (status) => ({ 1: 'info', 2: 'success', 3: 'warning' }[status] || '')
@@ -266,7 +294,41 @@ const addBill = () => {
   billForm.rent_fee = String(room.value.rent_amount || room.value.monthly_rent || '')
   billForm.water_fee = ''
   billForm.electricity_fee = ''
+  billForm.gas_fee = ''
+  previewData.value = null
   showBill.value = true
+  // 自动加载预览
+  loadBillPreview()
+}
+
+const onBillMonthChange = (e) => {
+  billForm.bill_month = e.detail.value
+  loadBillPreview()
+}
+
+const loadBillPreview = async () => {
+  if (!roomId.value || !billForm.bill_month) return
+  try {
+    const res = await billApi.preview({ room_id: parseInt(roomId.value), bill_month: billForm.bill_month })
+    previewData.value = res
+    // 自动填充计算结果（如果输入框为空）
+    if (res) {
+      if (!billForm.rent_fee && res.rent_fee) {
+        billForm.rent_fee = res.rent_fee.toFixed(2)
+      }
+      if (!billForm.water_fee && res.water_fee) {
+        billForm.water_fee = res.water_fee.toFixed(2)
+      }
+      if (!billForm.electricity_fee && res.electricity_fee) {
+        billForm.electricity_fee = res.electricity_fee.toFixed(2)
+      }
+      if (!billForm.gas_fee && res.gas_fee) {
+        billForm.gas_fee = res.gas_fee.toFixed(2)
+      }
+    }
+  } catch (error) {
+    console.error('加载费用预览失败', error)
+  }
 }
 
 const submitBill = async () => {
@@ -282,7 +344,8 @@ const submitBill = async () => {
       rent_fee: parseFloat(billForm.rent_fee) || 0,
       water_fee: parseFloat(billForm.water_fee) || 0,
       electricity_fee: parseFloat(billForm.electricity_fee) || 0,
-      auto_calculate: true  // 自动计算水电气费用
+      gas_fee: parseFloat(billForm.gas_fee) || 0,
+      auto_calculate: false
     })
     uni.showToast({ title: '创建成功', icon: 'success' })
     showBill.value = false
@@ -650,5 +713,77 @@ const confirmPay = async () => {
   border-radius: 12rpx;
   padding: 24rpx;
   font-size: 30rpx;
+}
+
+.fee-section {
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin: 20rpx 0;
+}
+
+.fee-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.fee-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+
+.fee-item:last-child {
+  border-bottom: none;
+}
+
+.fee-label-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.fee-label {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.fee-usage {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.fee-input {
+  width: 200rpx;
+  text-align: right;
+  font-size: 26rpx;
+  background: #fff;
+  border-radius: 8rpx;
+  padding: 12rpx;
+}
+
+.fee-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16rpx;
+  margin-top: 8rpx;
+  border-top: 1rpx solid #ddd;
+}
+
+.fee-total .fee-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.fee-amount {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #FF6B6B;
 }
 </style>

@@ -196,6 +196,7 @@ export const billApi = {
   update: function(id, data) { return api.put('/bills/' + id, data) },
   delete: function(id) { return api.delete('/bills/' + id) },
   pay: function(id, data) { return api.put('/bills/' + id + '/pay', data) },
+  preview: function(params) { return api.get('/bills/preview', params) },
   getStatistics: function(params) { return api.get('/bills/statistics', params) },
   getMonthlyStatistics: function(params) { return api.get('/bills/monthly-statistics', params) }
 }

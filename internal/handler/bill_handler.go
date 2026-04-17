@@ -118,6 +118,40 @@ func (h *BillHandler) CreateBill(c *gin.Context) {
 	response.Success(c, bill)
 }
 
+// PreviewBill 预览账单费用
+// @Summary 预览账单费用
+// @Description 根据抄表记录和费率自动计算账单费用
+// @Tags 账单管理
+// @Produce json
+// @Security BearerAuth
+// @Param room_id query int true "房间ID"
+// @Param bill_month query string true "账单月份(YYYY-MM)"
+// @Success 200 {object} response.Response
+// @Router /bills/preview [get]
+func (h *BillHandler) PreviewBill(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+
+	roomID, err := strconv.ParseUint(c.Query("room_id"), 10, 64)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, "无效的房间ID")
+		return
+	}
+
+	billMonth := c.Query("bill_month")
+	if billMonth == "" {
+		response.FailWithMsg(c, errors.CodeBadRequest, "请选择账单月份")
+		return
+	}
+
+	preview, err := h.billService.PreviewBill(userID, uint(roomID), billMonth)
+	if err != nil {
+		response.FailWithMsg(c, errors.CodeBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, preview)
+}
+
 // GetBill 获取账单详情
 // @Summary 获取账单详情
 // @Description 根据ID获取账单详情

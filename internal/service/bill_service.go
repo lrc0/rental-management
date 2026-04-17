@@ -123,6 +123,90 @@ type CreateBillRequest struct {
 	AutoCalculate  bool    `json:"auto_calculate"` // 是否自动计算水电气费用
 }
 
+// BillPreviewResponse 账单预览响应
+type BillPreviewResponse struct {
+	RentFee          float64 `json:"rent_fee"`
+	WaterFee         float64 `json:"water_fee"`
+	ElectricityFee   float64 `json:"electricity_fee"`
+	GasFee           float64 `json:"gas_fee"`
+	TotalAmount      float64 `json:"total_amount"`
+	WaterUsage       float64 `json:"water_usage"`
+	ElectricityUsage float64 `json:"electricity_usage"`
+	GasUsage         float64 `json:"gas_usage"`
+	WaterRate        float64 `json:"water_rate"`
+	ElectricityRate  float64 `json:"electricity_rate"`
+	GasRate          float64 `json:"gas_rate"`
+	HasReading       bool    `json:"has_reading"`
+}
+
+// PreviewBill 预览账单费用（自动计算）
+func (s *BillService) PreviewBill(userID uint, roomID uint, billMonth string) (*BillPreviewResponse, error) {
+	// 验证房间归属
+	room, err := s.roomRepo.FindByIDAndUserID(roomID, userID)
+	if err != nil {
+		return nil, errors.New("房间不存在或无权限")
+	}
+
+	response := &BillPreviewResponse{}
+
+	// 获取费率配置
+	feeRate, err := s.userRepo.GetFeeRateByUserID(userID)
+	if err != nil {
+		feeRate = &model.FeeRate{
+			WaterRate:       0,
+			ElectricityRate: 0,
+			GasRate:         0,
+		}
+	}
+	response.WaterRate = feeRate.WaterRate
+	response.ElectricityRate = feeRate.ElectricityRate
+	response.GasRate = feeRate.GasRate
+
+	// 获取租金
+	contract, err := s.contractRepo.FindActiveByRoomID(room.ID)
+	if err == nil && contract != nil {
+		response.RentFee = contract.MonthlyRent
+	} else {
+		response.RentFee = room.RentAmount
+		if response.RentFee == 0 {
+			response.RentFee = room.MonthlyRent
+		}
+	}
+
+	// 解析账单月份，获取该月的起止日期
+	monthStart, err := time.Parse("2006-01", billMonth)
+	if err == nil {
+		monthEnd := monthStart.AddDate(0, 1, 0)
+
+		// 获取本月抄表记录
+		readings, _, err := s.billRepo.ListMeterReadings(userID, room.ID, &monthStart, &monthEnd, 1, 100)
+		if err == nil && len(readings) > 0 {
+			response.HasReading = true
+			// 使用最新的一条抄表记录
+			latestReading := readings[0]
+			response.WaterUsage = latestReading.WaterUsage
+			response.ElectricityUsage = latestReading.ElectricityUsage
+			response.GasUsage = latestReading.GasUsage
+
+			// 计算费用
+			if latestReading.WaterUsage > 0 && feeRate.WaterRate > 0 {
+				response.WaterFee = latestReading.WaterUsage * feeRate.WaterRate
+			}
+			if latestReading.ElectricityUsage > 0 && feeRate.ElectricityRate > 0 {
+				response.ElectricityFee = latestReading.ElectricityUsage * feeRate.ElectricityRate
+			}
+			if latestReading.GasUsage > 0 && feeRate.GasRate > 0 {
+				response.GasFee = latestReading.GasUsage * feeRate.GasRate
+			}
+		}
+	}
+
+	// 计算总金额
+	response.TotalAmount = response.RentFee + response.WaterFee + response.ElectricityFee + response.GasFee
+
+	return response, nil
+}
+
 // CreateBill 生成账单
 func (s *BillService) CreateBill(userID uint, req *CreateBillRequest) (*model.Bill, error) {
 	// 验证房间归属

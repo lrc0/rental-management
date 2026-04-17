@@ -193,6 +193,7 @@ func main() {
 			// 账单管理
 			protected.POST("/bills", billHandler.CreateBill)
 			protected.GET("/bills", billHandler.ListBills)
+				protected.GET("/bills/preview", billHandler.PreviewBill)
 			protected.GET("/bills/statistics", billHandler.GetBillStatistics)
 			protected.GET("/bills/monthly-statistics", billHandler.GetMonthlyStatistics)
 			protected.GET("/bills/:id", billHandler.GetBill)
