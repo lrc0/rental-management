@@ -58,7 +58,12 @@ func (r *PropertyRepository) Update(property *model.Property) error {
 
 // Delete 删除房源
 func (r *PropertyRepository) Delete(id uint) error {
-	return r.db.Delete(&model.Property{}, id).Error
+	return r.db.Where("id = ?", id).Delete(&model.Property{}).Error
+}
+
+// DeleteByIDAndUserID 根据ID和用户ID删除房源
+func (r *PropertyRepository) DeleteByIDAndUserID(id, userID uint) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&model.Property{}).Error
 }
 
 // UpdateRoomCount 更新房间数

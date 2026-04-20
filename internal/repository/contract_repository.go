@@ -115,3 +115,13 @@ func (r *ContractRepository) CheckRoomAvailable(roomID uint, startDate time.Time
 func (r *ContractRepository) Delete(id uint) error {
 	return r.db.Delete(&model.Contract{}, id).Error
 }
+
+// DeleteByIDAndUserID 根据ID和用户ID删除合同
+func (r *ContractRepository) DeleteByIDAndUserID(id, userID uint) error {
+	return r.db.Exec(`
+		DELETE c FROM contracts c
+		JOIN rooms r ON c.room_id = r.id
+		JOIN properties p ON r.property_id = p.id
+		WHERE c.id = ? AND p.user_id = ?
+	`, id, userID).Error
+}

@@ -101,7 +101,7 @@ func (s *PropertyService) DeleteProperty(id, userID uint) error {
 		return errors.New("该房源下存在房间，无法删除")
 	}
 
-	return s.propertyRepo.Delete(id)
+	return s.propertyRepo.DeleteByIDAndUserID(id, userID)
 }
 
 // CreateRoomRequest 创建房间请求
@@ -230,7 +230,7 @@ func (s *PropertyService) DeleteRoom(id, userID uint) error {
 		return errors.New("房间已出租，无法删除")
 	}
 
-	if err := s.roomRepo.Delete(id); err != nil {
+	if err := s.roomRepo.DeleteByIDAndUserID(id, userID); err != nil {
 		return err
 	}
 
@@ -243,10 +243,11 @@ func (s *PropertyService) DeleteRoom(id, userID uint) error {
 
 // UpdateRoomStatus 更新房间状态
 func (s *PropertyService) UpdateRoomStatus(id, userID uint, status int8) error {
-	room, err := s.roomRepo.FindByIDAndUserID(id, userID)
+	// 先验证权限
+	_, err := s.roomRepo.FindByIDAndUserID(id, userID)
 	if err != nil {
 		return err
 	}
 
-	return s.roomRepo.UpdateStatus(room.ID, status)
+	return s.roomRepo.UpdateStatusByUserID(id, userID, status)
 }

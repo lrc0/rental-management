@@ -206,6 +206,11 @@ func (r *BillRepository) DeleteBill(id uint) error {
 	return r.db.Delete(&model.Bill{}, id).Error
 }
 
+// DeleteBillByIDAndUserID 根据ID和用户ID删除账单
+func (r *BillRepository) DeleteBillByIDAndUserID(id, userID uint) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&model.Bill{}).Error
+}
+
 // GetMeterReadingByID 根据ID获取抄表记录
 func (r *BillRepository) GetMeterReadingByID(id uint) (*model.MeterReading, error) {
 	var reading model.MeterReading
@@ -219,4 +224,14 @@ func (r *BillRepository) GetMeterReadingByID(id uint) (*model.MeterReading, erro
 // DeleteMeterReading 删除抄表记录
 func (r *BillRepository) DeleteMeterReading(id uint) error {
 	return r.db.Delete(&model.MeterReading{}, id).Error
+}
+
+// DeleteMeterReadingByIDAndUserID 根据ID和用户ID删除抄表记录
+func (r *BillRepository) DeleteMeterReadingByIDAndUserID(id, userID uint) error {
+	return r.db.Exec(`
+		DELETE m FROM meter_readings m
+		JOIN rooms r ON m.room_id = r.id
+		JOIN properties p ON r.property_id = p.id
+		WHERE m.id = ? AND p.user_id = ?
+	`, id, userID).Error
 }

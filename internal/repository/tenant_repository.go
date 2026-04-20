@@ -107,6 +107,11 @@ func (r *TenantRepository) Delete(id uint) error {
 	return r.db.Delete(&model.Tenant{}, id).Error
 }
 
+// DeleteByIDAndUserID 根据ID和用户ID删除租客
+func (r *TenantRepository) DeleteByIDAndUserID(id, userID uint) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&model.Tenant{}).Error
+}
+
 // FindByIDCard 根据身份证查找租客
 func (r *TenantRepository) FindByIDCard(userID uint, idCard string) (*model.Tenant, error) {
 	var tenant model.Tenant

@@ -73,7 +73,16 @@ func (r *RoomRepository) Update(room *model.Room) error {
 
 // Delete 删除房间
 func (r *RoomRepository) Delete(id uint) error {
-	return r.db.Delete(&model.Room{}, id).Error
+	return r.db.Where("id = ?", id).Delete(&model.Room{}).Error
+}
+
+// DeleteByIDAndUserID 根据ID和用户ID删除房间(通过房源关联)
+func (r *RoomRepository) DeleteByIDAndUserID(id, userID uint) error {
+	return r.db.Exec(`
+		DELETE r FROM rooms r
+		JOIN properties p ON r.property_id = p.id
+		WHERE r.id = ? AND p.user_id = ?
+	`, id, userID).Error
 }
 
 // CountByPropertyID 统计房源下的房间数
@@ -93,6 +102,16 @@ func (r *RoomRepository) FindByPropertyID(propertyID uint) ([]model.Room, error)
 // UpdateStatus 更新房间状态
 func (r *RoomRepository) UpdateStatus(id uint, status int8) error {
 	return r.db.Model(&model.Room{}).Where("id = ?", id).Update("status", status).Error
+}
+
+// UpdateStatusByUserID 根据ID和用户ID更新房间状态
+func (r *RoomRepository) UpdateStatusByUserID(id, userID uint, status int8) error {
+	return r.db.Exec(`
+		UPDATE rooms r
+		JOIN properties p ON r.property_id = p.id
+		SET r.status = ?
+		WHERE r.id = ? AND p.user_id = ?
+	`, status, id, userID).Error
 }
 
 // RoomWithTenant 房间带租客信息

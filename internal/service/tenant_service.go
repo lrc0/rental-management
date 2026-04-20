@@ -137,7 +137,7 @@ func (s *TenantService) DeleteTenant(id, userID uint) error {
 		return errors.New("该租客有有效合同，无法删除")
 	}
 
-	return s.tenantRepo.Delete(id)
+	return s.tenantRepo.DeleteByIDAndUserID(id, userID)
 }
 
 // CreateContractRequest 签订合同请求
@@ -325,5 +325,5 @@ func (s *TenantService) DeleteContract(id, userID uint) error {
 		return errors.New("生效中的合同不能删除，请先解约")
 	}
 
-	return s.contractRepo.Delete(id)
+	return s.contractRepo.DeleteByIDAndUserID(id, userID)
 }

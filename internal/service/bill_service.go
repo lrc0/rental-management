@@ -495,7 +495,7 @@ func (s *BillService) DeleteBill(id, userID uint) error {
 		return errors.New("已支付的账单不能删除")
 	}
 
-	return s.billRepo.DeleteBill(id)
+	return s.billRepo.DeleteBillByIDAndUserID(id, userID)
 }
 
 // DeleteMeterReading 删除抄表记录
@@ -512,5 +512,5 @@ func (s *BillService) DeleteMeterReading(id, userID uint) error {
 		return errors.New("无权限删除此记录")
 	}
 
-	return s.billRepo.DeleteMeterReading(id)
+	return s.billRepo.DeleteMeterReadingByIDAndUserID(id, userID)
 }
