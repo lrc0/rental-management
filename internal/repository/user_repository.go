@@ -28,6 +28,16 @@ func (r *UserRepository) FindByPhone(phone string) (*model.User, error) {
 	return &user, nil
 }
 
+// FindByUsername 根据用户名查找用户
+func (r *UserRepository) FindByUsername(username string) (*model.User, error) {
+	var user model.User
+	err := r.db.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // FindByID 根据ID查找用户
 func (r *UserRepository) FindByID(id uint) (*model.User, error) {
 	var user model.User
@@ -47,6 +57,13 @@ func (r *UserRepository) Update(user *model.User) error {
 func (r *UserRepository) ExistsByPhone(phone string) (bool, error) {
 	var count int64
 	err := r.db.Model(&model.User{}).Where("phone = ?", phone).Count(&count).Error
+	return count > 0, err
+}
+
+// ExistsByUsername 检查用户名是否已存在
+func (r *UserRepository) ExistsByUsername(username string) (bool, error) {
+	var count int64
+	err := r.db.Model(&model.User{}).Where("username = ?", username).Count(&count).Error
 	return count > 0, err
 }
 

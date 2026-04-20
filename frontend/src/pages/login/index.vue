@@ -7,8 +7,8 @@
 
     <view class="login-form">
       <view class="form-item">
-        <text class="form-icon">📱</text>
-        <input class="form-input" type="number" v-model="formData.phone" placeholder="请输入手机号" maxlength="11" />
+        <text class="form-icon">👤</text>
+        <input class="form-input" v-model="formData.username" placeholder="请输入账号" />
       </view>
 
       <view class="form-item">
@@ -31,12 +31,16 @@
       <view class="register-content">
         <view class="popup-title">注册账号</view>
         <view class="form-item">
-          <text class="form-label">手机号</text>
-          <input class="form-input" type="number" v-model="registerData.phone" placeholder="请输入手机号" maxlength="11" />
+          <text class="form-label">账号</text>
+          <input class="form-input" v-model="registerData.username" placeholder="请设置账号" />
         </view>
         <view class="form-item">
           <text class="form-label">姓名</text>
           <input class="form-input" v-model="registerData.name" placeholder="请输入姓名" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">手机号</text>
+          <input class="form-input" type="number" v-model="registerData.phone" placeholder="选填" maxlength="11" />
         </view>
         <view class="form-item">
           <text class="form-label">密码</text>
@@ -65,11 +69,11 @@ const registerLoading = ref(false)
 const showPassword = ref(false)
 const showRegister = ref(false)
 
-const formData = reactive({ phone: '', password: '' })
-const registerData = reactive({ phone: '', name: '', password: '', confirmPassword: '' })
+const formData = reactive({ username: '', password: '' })
+const registerData = reactive({ username: '', name: '', phone: '', password: '', confirmPassword: '' })
 
 const handleLogin = async () => {
-  if (!formData.phone) { uni.showToast({ title: '请输入手机号', icon: 'none' }); return }
+  if (!formData.username) { uni.showToast({ title: '请输入账号', icon: 'none' }); return }
   if (!formData.password) { uni.showToast({ title: '请输入密码', icon: 'none' }); return }
   loading.value = true
   try {
@@ -86,17 +90,17 @@ const handleLogin = async () => {
 const goRegister = () => { showRegister.value = true }
 
 const handleRegister = async () => {
-  if (!registerData.phone) { uni.showToast({ title: '请输入手机号', icon: 'none' }); return }
+  if (!registerData.username) { uni.showToast({ title: '请设置账号', icon: 'none' }); return }
   if (!registerData.name) { uni.showToast({ title: '请输入姓名', icon: 'none' }); return }
   if (!registerData.password || registerData.password.length < 6) { uni.showToast({ title: '密码至少6位', icon: 'none' }); return }
   if (registerData.password !== registerData.confirmPassword) { uni.showToast({ title: '两次密码不一致', icon: 'none' }); return }
 
   registerLoading.value = true
   try {
-    await userStore.register({ phone: registerData.phone, name: registerData.name, password: registerData.password })
+    await userStore.register({ username: registerData.username, name: registerData.name, phone: registerData.phone, password: registerData.password })
     uni.showToast({ title: '注册成功', icon: 'success' })
     showRegister.value = false
-    formData.phone = registerData.phone
+    formData.username = registerData.username
     formData.password = registerData.password
   } catch (error) {
     console.error('注册失败', error)

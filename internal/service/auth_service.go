@@ -36,14 +36,15 @@ func NewAuthService(
 
 // RegisterRequest 注册请求
 type RegisterRequest struct {
-	Phone    string `json:"phone" binding:"required"`
+	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required,min=6"`
 	Name     string `json:"name"`
+	Phone    string `json:"phone"` // 可选
 }
 
 // LoginRequest 登录请求
 type LoginRequest struct {
-	Phone    string `json:"phone" binding:"required"`
+	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -55,13 +56,13 @@ type LoginResponse struct {
 
 // Register 用户注册
 func (s *AuthService) Register(req *RegisterRequest) (*model.User, error) {
-	// 检查手机号是否已注册
-	exists, err := s.userRepo.ExistsByPhone(req.Phone)
+	// 检查用户名是否已注册
+	exists, err := s.userRepo.ExistsByUsername(req.Username)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("手机号已注册")
+		return nil, errors.New("用户名已存在")
 	}
 
 	// 加密密码
@@ -72,6 +73,7 @@ func (s *AuthService) Register(req *RegisterRequest) (*model.User, error) {
 
 	// 创建用户
 	user := &model.User{
+		Username:     req.Username,
 		Phone:        req.Phone,
 		PasswordHash: passwordHash,
 		Name:         req.Name,
@@ -97,10 +99,10 @@ func (s *AuthService) Register(req *RegisterRequest) (*model.User, error) {
 // Login 用户登录
 func (s *AuthService) Login(req *LoginRequest) (*LoginResponse, error) {
 	// 查找用户
-	user, err := s.userRepo.FindByPhone(req.Phone)
+	user, err := s.userRepo.FindByUsername(req.Username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("手机号未注册")
+			return nil, errors.New("账号不存在")
 		}
 		return nil, err
 	}

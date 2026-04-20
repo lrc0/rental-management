@@ -7,7 +7,8 @@ USE rental_management;
 -- 房东用户表
 CREATE TABLE IF NOT EXISTS `users` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `phone` VARCHAR(20) NOT NULL COMMENT '手机号',
+  `username` VARCHAR(50) NOT NULL COMMENT '用户名(账号)',
+  `phone` VARCHAR(20) DEFAULT '' COMMENT '手机号(可选)',
   `password_hash` VARCHAR(255) NOT NULL COMMENT '密码哈希',
   `name` VARCHAR(50) DEFAULT '' COMMENT '姓名',
   `avatar` VARCHAR(255) DEFAULT '' COMMENT '头像',
@@ -16,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_phone` (`phone`),
+  UNIQUE KEY `idx_username` (`username`),
   KEY `idx_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='房东用户表';
 

@@ -9,7 +9,8 @@ import (
 // User 房东用户表
 type User struct {
 	ID           uint           `gorm:"primaryKey" json:"id"`
-	Phone        string         `gorm:"uniqueIndex;size:20;not null" json:"phone"`
+	Username     string         `gorm:"uniqueIndex;size:50" json:"username"`              // 用户名（账号）
+	Phone        string         `gorm:"size:20" json:"phone"`                             // 手机号（可选）
 	PasswordHash string         `gorm:"size:255;not null" json:"-"`
 	Name         string         `gorm:"size:50" json:"name"`
 	Avatar       string         `gorm:"size:255" json:"avatar"`
