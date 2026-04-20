@@ -39,10 +39,6 @@
           <input class="form-input" v-model="registerData.name" placeholder="请输入姓名" />
         </view>
         <view class="form-item">
-          <text class="form-label">手机号</text>
-          <input class="form-input" type="number" v-model="registerData.phone" placeholder="选填" maxlength="11" />
-        </view>
-        <view class="form-item">
           <text class="form-label">密码</text>
           <input class="form-input" password v-model="registerData.password" placeholder="请设置密码(至少6位)" />
         </view>
@@ -70,7 +66,7 @@ const showPassword = ref(false)
 const showRegister = ref(false)
 
 const formData = reactive({ username: '', password: '' })
-const registerData = reactive({ username: '', name: '', phone: '', password: '', confirmPassword: '' })
+const registerData = reactive({ username: '', name: '', password: '', confirmPassword: '' })
 
 const handleLogin = async () => {
   if (!formData.username) { uni.showToast({ title: '请输入账号', icon: 'none' }); return }
@@ -97,7 +93,7 @@ const handleRegister = async () => {
 
   registerLoading.value = true
   try {
-    await userStore.register({ username: registerData.username, name: registerData.name, phone: registerData.phone, password: registerData.password })
+    await userStore.register({ username: registerData.username, name: registerData.name, password: registerData.password })
     uni.showToast({ title: '注册成功', icon: 'success' })
     showRegister.value = false
     formData.username = registerData.username
